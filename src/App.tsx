@@ -102,7 +102,7 @@ function App() {
                   displayWidth={shortEdge}
                 />
               ) : (
-                <div className="w-full h-64 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
+                <div className="w-full h-full flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
                   <p>上传图片后将显示拼豆图样</p>
                 </div>
               )}
