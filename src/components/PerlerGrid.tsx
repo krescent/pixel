@@ -187,7 +187,7 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
               x2={i * cellSize}
               y2={gridSize}
               stroke={i % 5 === 0 ? "#ff4444" : "#333"}
-              strokeWidth={i % 5 === 0 ? 2 : 1}
+              strokeWidth={i % 5 === 0 ? 1.5 : 1}
             />
           ))}
           {Array.from({ length: displayWidth + 1 }).map((_, i) => (
@@ -198,7 +198,7 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
               x2={gridSize}
               y2={i * cellSize}
               stroke={i % 5 === 0 ? "#ff4444" : "#333"}
-              strokeWidth={i % 5 === 0 ? 2 : 1}
+              strokeWidth={i % 5 === 0 ? 1.5 : 1}
             />
           ))}
           

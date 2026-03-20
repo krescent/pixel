@@ -81,7 +81,7 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
     }
     
     ctx.strokeStyle = "#ff4444";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1.5;
     for (let x = 0; x <= width; x += 5) {
       ctx.beginPath();
       ctx.moveTo(x * cellSize + axisWidth, axisWidth);
