@@ -42,7 +42,7 @@ export function useImageProcessor() {
         const endY = Math.ceil(srcYEnd);
         
         const totalArea = (srcXEnd - srcXStart) * (srcYEnd - srcYStart);
-        let dominantR = 0, dominantG = 0, dominantB = 0, maxWeight = 0;
+        const colorWeights: Map<string, { color: PerlerColor; weight: number; r: number; g: number; b: number }> = new Map();
         
         for (let sy = startY; sy < endY && sy < srcHeight; sy++) {
           for (let sx = startX; sx < endX && sx < srcWidth; sx++) {
@@ -56,12 +56,20 @@ export function useImageProcessor() {
             
             const weight = (overlapRight - overlapLeft) * (overlapBottom - overlapTop);
             
-            if (a < 128 || weight <= maxWeight) continue;
+            if (a < 128) continue;
             
-            maxWeight = weight;
-            dominantR = data[srcIndex];
-            dominantG = data[srcIndex + 1];
-            dominantB = data[srcIndex + 2];
+            const r = data[srcIndex];
+            const g = data[srcIndex + 1];
+            const b = data[srcIndex + 2];
+            const perlerColor = findClosestPerlerColor(r, g, b);
+            const key = `${perlerColor.code}`;
+            
+            const existing = colorWeights.get(key);
+            if (existing) {
+              existing.weight += weight;
+            } else {
+              colorWeights.set(key, { color: perlerColor, weight, r, g, b });
+            }
           }
         }
         
@@ -69,13 +77,26 @@ export function useImageProcessor() {
         let rgb: [number, number, number];
         let transparent = false;
         
-        if (maxWeight === 0 || maxWeight < totalArea * 0.5) {
+        if (colorWeights.size === 0) {
           color = WHITE_COLOR;
           rgb = [255, 255, 255];
           transparent = true;
         } else {
-          color = findClosestPerlerColor(dominantR, dominantG, dominantB);
-          rgb = [dominantR, dominantG, dominantB];
+          let maxEntry = { weight: 0, color: WHITE_COLOR, r: 255, g: 255, b: 255 };
+          for (const entry of colorWeights.values()) {
+            if (entry.weight > maxEntry.weight) {
+              maxEntry = entry;
+            }
+          }
+          
+          if (maxEntry.weight < totalArea * 0.5) {
+            color = WHITE_COLOR;
+            rgb = [255, 255, 255];
+            transparent = true;
+          } else {
+            color = maxEntry.color;
+            rgb = [maxEntry.r, maxEntry.g, maxEntry.b];
+          }
         }
         
         row.push({ color, rgb, transparent });
