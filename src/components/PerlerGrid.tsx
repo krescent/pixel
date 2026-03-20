@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import type { WheelEvent } from "react";
 import type { ProcessedPixel } from "../hooks/useImageProcessor";
 import { rgbToHex } from "../utils/colorMatching";
@@ -9,13 +9,48 @@ interface PerlerGridProps {
 }
 
 export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
 
   const handleWheel = useCallback((e: WheelEvent<HTMLDivElement>) => {
     e.preventDefault();
+    const container = containerRef.current;
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left + container.scrollLeft;
+    const mouseY = e.clientY - rect.top + container.scrollTop;
+
     const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    setScale(prev => Math.max(0.5, Math.min(5, prev + delta)));
-  }, []);
+    const newScale = Math.max(0.5, Math.min(10, scale + delta));
+    
+    const scaleRatio = newScale / scale;
+    const newScrollX = mouseX * scaleRatio - (e.clientX - rect.left);
+    const newScrollY = mouseY * scaleRatio - (e.clientY - rect.top);
+
+    setScale(newScale);
+    
+    requestAnimationFrame(() => {
+      container.scrollLeft = newScrollX;
+      container.scrollTop = newScrollY;
+    });
+  }, [scale]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const fitScale = Math.min(
+      container.clientWidth / (displayWidth),
+      container.clientHeight / (displayWidth)
+    );
+    setScale(fitScale);
+    
+    const scrollX = (displayWidth * fitScale - container.clientWidth) / 2;
+    const scrollY = (displayWidth * fitScale - container.clientHeight) / 2;
+    container.scrollLeft = scrollX;
+    container.scrollTop = scrollY;
+  }, [displayWidth]);
 
   if (pixels.length === 0) return null;
 
@@ -25,6 +60,7 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
 
   return (
     <div 
+      ref={containerRef}
       className="overflow-auto bg-gray-500 rounded-xl p-4"
       onWheel={handleWheel}
       style={{
