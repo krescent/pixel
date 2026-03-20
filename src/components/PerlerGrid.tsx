@@ -24,12 +24,12 @@ export function PerlerGrid({ pixels }: PerlerGridProps) {
 
   return (
     <div 
-      className="overflow-auto bg-gray-200 rounded-xl p-4 max-w-full max-h-full"
+      className="overflow-auto bg-gray-500 rounded-xl p-4 max-w-full max-h-full"
       onWheel={handleWheel}
     >
       <div className="inline-block">
         <div 
-          className="inline-grid border border-gray-400"
+          className="inline-grid"
           style={{
             gridTemplateColumns: `repeat(${width}, ${displaySize}px)`,
             gap: '1px',

@@ -29,7 +29,7 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
       return;
     }
     
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = "#888888";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     pixels.forEach((row, y) => {
@@ -38,11 +38,14 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
         const py = y * (pixelSize + gap);
         
         ctx.fillStyle = rgbToHex(...pixel.rgb);
-        ctx.fillRect(px, py, pixelSize, pixelSize);
+        
+        ctx.beginPath();
+        ctx.roundRect(px, py, pixelSize, pixelSize, 2);
+        ctx.fill();
         
         const textColor = isLightColor(pixel.rgb) ? "#333333" : "#ffffff";
         ctx.fillStyle = textColor;
-        ctx.font = `bold 3px Arial`;
+        ctx.font = `bold ${pixelSize * 0.4}px Arial`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(pixel.color.code, px + pixelSize / 2, py + pixelSize / 2);
