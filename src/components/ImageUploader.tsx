@@ -5,8 +5,9 @@ interface ImageUploaderProps {
   imageUrl: string | null;
   imageWidth: number;
   imageHeight: number;
-  crop: { x: number; y: number; width: number; height: number };
-  onCropChange: (crop: { x: number; y: number; width: number; height: number }) => void;
+  cropSize: number;
+  onCropPositionChange: (x: number, y: number) => void;
+  cropPosition: { x: number; y: number };
 }
 
 export function ImageUploader({
@@ -14,11 +15,11 @@ export function ImageUploader({
   imageUrl,
   imageWidth,
   imageHeight,
-  crop,
-  onCropChange,
+  cropSize,
+  onCropPositionChange,
+  cropPosition,
 }: ImageUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
-  const [isPanning, setIsPanning] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [imgScale, setImgScale] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -46,11 +47,15 @@ export function ImageUploader({
 
   useEffect(() => {
     if (imgRef.current) {
-      const handleLoad = () => {
+      const updateScale = () => {
         setImgScale(imgRef.current!.clientWidth / imageWidth);
       };
-      imgRef.current.addEventListener('load', handleLoad);
-      handleLoad();
+      
+      const observer = new ResizeObserver(updateScale);
+      observer.observe(imgRef.current);
+      updateScale();
+      
+      return () => observer.disconnect();
     }
   }, [imageUrl, imageWidth]);
 
@@ -73,29 +78,32 @@ export function ImageUploader({
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsPanning(true);
+    setIsDragging(true);
     setDragStart({ x: e.clientX, y: e.clientY });
   }, []);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isPanning) return;
+    if (!isDragging || !imgRef.current) return;
 
     const dx = (e.clientX - dragStart.x) / imgScale;
     const dy = (e.clientY - dragStart.y) / imgScale;
 
-    const newX = Math.max(0, Math.min(imageWidth - crop.width, crop.x + dx));
-    const newY = Math.max(0, Math.min(imageHeight - crop.height, crop.y + dy));
+    const maxX = imageWidth - cropSize;
+    const maxY = imageHeight - cropSize;
 
-    onCropChange({ x: newX, y: newY, width: crop.width, height: crop.height });
+    const newX = Math.max(0, Math.min(maxX, cropPosition.x + dx));
+    const newY = Math.max(0, Math.min(maxY, cropPosition.y + dy));
+
+    onCropPositionChange(Math.round(newX), Math.round(newY));
     setDragStart({ x: e.clientX, y: e.clientY });
-  }, [isPanning, dragStart, imgScale, imageWidth, imageHeight, crop, onCropChange]);
+  }, [isDragging, dragStart, imgScale, imageWidth, imageHeight, cropSize, cropPosition, onCropPositionChange]);
 
   const handleMouseUp = useCallback(() => {
-    setIsPanning(false);
+    setIsDragging(false);
   }, []);
 
   useEffect(() => {
-    const handleGlobalMouseUp = () => setIsPanning(false);
+    const handleGlobalMouseUp = () => setIsDragging(false);
     window.addEventListener('mouseup', handleGlobalMouseUp);
     return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
   }, []);
@@ -116,20 +124,23 @@ export function ImageUploader({
           />
           
           <div
-            className="absolute cursor-move group"
+            className="absolute border-4 border-blue-500 bg-blue-500/20 cursor-move group"
             style={{
-              left: `${crop.x * imgScale}px`,
-              top: `${crop.y * imgScale}px`,
-              width: `${crop.width * imgScale}px`,
-              height: `${crop.height * imgScale}px`,
+              left: `${cropPosition.x * imgScale}px`,
+              top: `${cropPosition.y * imgScale}px`,
+              width: `${cropSize * imgScale}px`,
+              height: `${cropSize * imgScale}px`,
             }}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
           >
-            <div className="absolute inset-0 border-4 border-blue-500 bg-blue-500/10 hover:bg-blue-500/20 transition-colors" />
+            <div className="absolute inset-0 border-2 border-white/50" />
             <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
               拖动调整取景框
+            </div>
+            <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-1 py-0.5 rounded">
+              {cropSize}x{cropSize}
             </div>
           </div>
         </div>

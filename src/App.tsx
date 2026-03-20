@@ -10,66 +10,46 @@ function App() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [shortEdge, setShortEdge] = useState(50);
   const [beadSize, setBeadSize] = useState(3);
-  const [crop, setCrop] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const [cropPosition, setCropPosition] = useState({ x: 0, y: 0 });
   const { processImage } = useImageProcessor();
-
-  const calculateCrop = useCallback((imgWidth: number, imgHeight: number, targetShort: number) => {
-    const imgAspect = imgWidth / imgHeight;
-    
-    let cropWidth: number;
-    let cropHeight: number;
-    
-    if (imgAspect >= 1) {
-      cropHeight = targetShort;
-      cropWidth = Math.round(targetShort * imgAspect);
-    } else {
-      cropWidth = targetShort;
-      cropHeight = Math.round(targetShort / imgAspect);
-    }
-    
-    return {
-      x: Math.round((imgWidth - cropWidth) / 2),
-      y: Math.round((imgHeight - cropHeight) / 2),
-      width: cropWidth,
-      height: cropHeight,
-    };
-  }, []);
 
   const handleImageLoad = useCallback((data: ImageData, url: string) => {
     setImageData(data);
     setImageUrl(url);
-    setCrop(calculateCrop(data.width, data.height, shortEdge));
-  }, [shortEdge, calculateCrop]);
+    setCropPosition({ x: 0, y: 0 });
+  }, []);
+
+  const handleCropPositionChange = useCallback((x: number, y: number) => {
+    setCropPosition({ x, y });
+  }, []);
 
   const handleShortEdgeChange = useCallback((value: number) => {
     setShortEdge(value);
-    if (imageData) {
-      setCrop(calculateCrop(imageData.width, imageData.height, value));
-    }
-  }, [imageData, calculateCrop]);
-
-  const handleCropChange = useCallback((newCrop: { x: number; y: number; width: number; height: number }) => {
-    setCrop(newCrop);
   }, []);
 
   const croppedImageData = useMemo(() => {
     if (!imageData) return null;
     
-    const { data, width: srcWidth } = imageData;
-    const { x: cropX, y: cropY, width: cropW, height: cropH } = crop;
+    const { data, width: srcWidth, height: srcHeight } = imageData;
+    const { x: cropX, y: cropY } = cropPosition;
+    const cropSize = shortEdge;
+    
+    if (cropX + cropSize > srcWidth || cropY + cropSize > srcHeight) {
+      return null;
+    }
     
     const canvas = document.createElement("canvas");
-    canvas.width = cropW;
-    canvas.height = cropH;
+    canvas.width = cropSize;
+    canvas.height = cropSize;
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
 
-    const imageDataCropped = ctx.createImageData(cropW, cropH);
+    const imageDataCropped = ctx.createImageData(cropSize, cropSize);
     
-    for (let y = 0; y < cropH; y++) {
-      for (let x = 0; x < cropW; x++) {
+    for (let y = 0; y < cropSize; y++) {
+      for (let x = 0; x < cropSize; x++) {
         const srcIndex = ((cropY + y) * srcWidth + (cropX + x)) * 4;
-        const dstIndex = (y * cropW + x) * 4;
+        const dstIndex = (y * cropSize + x) * 4;
         
         imageDataCropped.data[dstIndex] = data[srcIndex];
         imageDataCropped.data[dstIndex + 1] = data[srcIndex + 1];
@@ -79,7 +59,7 @@ function App() {
     }
     
     return imageDataCropped;
-  }, [imageData, crop]);
+  }, [imageData, cropPosition, shortEdge]);
 
   const processed = croppedImageData ? processImage(croppedImageData, shortEdge) : null;
 
@@ -99,8 +79,9 @@ function App() {
                 imageUrl={imageUrl}
                 imageWidth={imageData?.width ?? 0}
                 imageHeight={imageData?.height ?? 0}
-                crop={crop}
-                onCropChange={handleCropChange}
+                cropSize={shortEdge}
+                onCropPositionChange={handleCropPositionChange}
+                cropPosition={cropPosition}
               />
             </div>
           </div>
@@ -132,17 +113,16 @@ function App() {
             onShortEdgeChange={handleShortEdgeChange}
             beadSize={beadSize}
             onBeadSizeChange={setBeadSize}
-            width={crop.width || 1}
-            height={crop.height || 1}
+            width={shortEdge}
+            height={shortEdge}
           />
 
           {processed && (
             <div className="mt-6 pt-6 border-t border-gray-200">
               <h3 className="font-medium text-gray-700 mb-3">图样统计</h3>
               <div className="space-y-2 text-sm text-gray-600">
-                <p>总像素: <span className="font-medium">{processed.width * processed.height}</span></p>
-                <p>宽 x 高: <span className="font-medium">{processed.width} x {processed.height}</span></p>
-                <p>使用颜色: <span className="font-medium">{new Set(processed.pixels.flat().map(p => p.color.name)).size}</span></p>
+                <p>像素尺寸: <span className="font-medium">{processed.width} x {processed.height}</span></p>
+                <p>使用颜色: <span className="font-medium">{new Set(processed.pixels.flat().map(p => p.color.code)).size}</span></p>
               </div>
             </div>
           )}
@@ -151,7 +131,7 @@ function App() {
             <h3 className="font-medium text-gray-700 mb-3">使用说明</h3>
             <ul className="text-sm text-gray-500 space-y-2">
               <li>1. 在左侧上传图片</li>
-              <li>2. 拖动蓝色取景框调整裁剪区域</li>
+              <li>2. 拖动蓝色取景框调整区域</li>
               <li>3. 调整滑轨控制像素数</li>
               <li>4. 选择拼豆尺寸</li>
               <li>5. 点击下载保存图样</li>
