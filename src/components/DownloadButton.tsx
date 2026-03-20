@@ -16,8 +16,8 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
     
     const height = pixels.length;
     const width = pixels[0]?.length ?? 0;
-    const pixelSize = 40;
-    const gap = 2;
+    const pixelSize = 16;
+    const gap = 1;
     
     const canvas = document.createElement("canvas");
     canvas.width = width * (pixelSize + gap);
@@ -37,19 +37,12 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
         const px = x * (pixelSize + gap);
         const py = y * (pixelSize + gap);
         
-        ctx.beginPath();
-        ctx.arc(px + pixelSize / 2, py + pixelSize / 2, pixelSize / 2 - 2, 0, Math.PI * 2);
         ctx.fillStyle = rgbToHex(...pixel.rgb);
-        ctx.fill();
+        ctx.fillRect(px, py, pixelSize, pixelSize);
         
-        ctx.beginPath();
-        ctx.arc(px + pixelSize / 2 - 4, py + pixelSize / 2 - 4, pixelSize / 6, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(255,255,255,0.35)";
-        ctx.fill();
-        
-        const textColor = isLightColor(pixel.rgb) ? "#000000" : "#ffffff";
+        const textColor = isLightColor(pixel.rgb) ? "#333333" : "#ffffff";
         ctx.fillStyle = textColor;
-        ctx.font = `bold ${Math.max(10, pixelSize / 3)}px Arial`;
+        ctx.font = `bold 3px Arial`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(pixel.color.code, px + pixelSize / 2, py + pixelSize / 2);
