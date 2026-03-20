@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useState } from "react";
 import type { ProcessedPixel } from "../hooks/useImageProcessor";
 import { rgbToHex } from "../utils/colorMatching";
 
@@ -9,108 +9,52 @@ interface PerlerGridProps {
 
 export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const scaleRef = useRef(1);
   const [scale, setScale] = useState(1);
 
-  const fitToContainer = useCallback(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const rect = container.getBoundingClientRect();
-    if (rect.width === 0 || rect.height === 0) return;
-
-    const padding = 32;
-    const fitScale = Math.min(
-      (rect.width - padding) / displayWidth,
-      (rect.height - padding) / displayWidth
-    );
-
-    scaleRef.current = fitScale;
-    setScale(fitScale);
-    
-    requestAnimationFrame(() => {
-      const contentWidth = displayWidth * fitScale;
-      const contentHeight = displayWidth * fitScale;
-      container.scrollLeft = Math.max(0, (contentWidth - rect.width + padding) / 2);
-      container.scrollTop = Math.max(0, (contentHeight - rect.height + padding) / 2);
-    });
-  }, [displayWidth]);
-
-  useEffect(() => {
-    fitToContainer();
-  }, [fitToContainer, displayWidth]);
-
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const observer = new ResizeObserver(fitToContainer);
+    const updateScale = () => {
+      const rect = container.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+
+      const padding = 32;
+      const fitScale = Math.min(
+        (rect.width - padding) / displayWidth,
+        (rect.height - padding) / displayWidth
+      );
+      setScale(fitScale);
+    };
+
+    updateScale();
+
+    const observer = new ResizeObserver(updateScale);
     observer.observe(container);
     return () => observer.disconnect();
-  }, [fitToContainer]);
-
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const container = containerRef.current;
-    if (!container) return;
-
-    const rect = container.getBoundingClientRect();
-    const padding = 32;
-    const minScale = Math.min(
-      (rect.width - padding) / displayWidth,
-      (rect.height - padding) / displayWidth
-    );
-
-    const oldScale = scaleRef.current;
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    let newScale = oldScale * delta;
-
-    if (newScale < minScale) {
-      scaleRef.current = minScale;
-      setScale(minScale);
-      fitToContainer();
-      return;
-    }
-
-    newScale = Math.min(10, newScale);
-    scaleRef.current = newScale;
-    setScale(newScale);
-
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    
-    const contentX = container.scrollLeft + mouseX;
-    const contentY = container.scrollTop + mouseY;
-    
-    const newContentX = (contentX / oldScale) * newScale;
-    const newContentY = (contentY / oldScale) * newScale;
-
-    container.scrollLeft = newContentX - mouseX;
-    container.scrollTop = newContentY - mouseY;
-  };
+  }, [displayWidth]);
 
   if (pixels.length === 0) return null;
 
   const width = pixels[0]?.length ?? 0;
-  const displaySize = displayWidth * scale;
-  const showCode = displaySize / width >= 8;
+  const cellSize = displayWidth * scale;
+  const showCode = cellSize / width >= 10;
 
   return (
     <div 
       ref={containerRef}
-      className="overflow-auto bg-gray-500 rounded-xl p-4"
-      onWheel={handleWheel}
+      className="overflow-hidden bg-gray-500 rounded-xl p-4"
       style={{ width: '100%', height: '100%' }}
     >
       <div 
-        className="inline-block"
+        className="mx-auto my-auto"
         style={{
-          width: `${displaySize}px`,
-          height: `${displaySize}px`,
+          width: `${cellSize}px`,
+          height: `${cellSize}px`,
         }}
       >
         <div 
-          className="inline-grid border-2 border-gray-600 w-full h-full"
+          className="grid w-full h-full"
           style={{
             gridTemplateColumns: `repeat(${width}, 1fr)`,
             gap: '1px',
@@ -121,11 +65,12 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
             return (
               <div
                 key={index}
-                className="rounded-sm flex items-center justify-center text-[3px] font-bold select-none aspect-square"
+                className="rounded-full flex items-center justify-center font-bold select-none aspect-square"
                 style={{
                   backgroundColor: rgbToHex(...pixel.rgb),
                   color: textColor,
-                  boxShadow: "inset 0 -1px 2px rgba(0,0,0,0.2), inset 0 1px 2px rgba(255,255,255,0.3)",
+                  fontSize: `${Math.max(4, cellSize / width * 0.5)}px`,
+                  boxShadow: "inset 0 -2px 4px rgba(0,0,0,0.2), inset 0 2px 4px rgba(255,255,255,0.3)",
                 }}
                 title={`${pixel.color.code} - ${pixel.color.name}`}
               >

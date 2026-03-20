@@ -16,12 +16,12 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
     
     const height = pixels.length;
     const width = pixels[0]?.length ?? 0;
-    const pixelSize = 16;
-    const gap = 1;
+    const cellSize = 60;
+    const gap = 4;
     
     const canvas = document.createElement("canvas");
-    canvas.width = width * (pixelSize + gap);
-    canvas.height = height * (pixelSize + gap);
+    canvas.width = width * (cellSize + gap);
+    canvas.height = height * (cellSize + gap);
     const ctx = canvas.getContext("2d");
     
     if (!ctx) {
@@ -34,21 +34,25 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
     
     pixels.forEach((row, y) => {
       row.forEach((pixel, x) => {
-        const px = x * (pixelSize + gap);
-        const py = y * (pixelSize + gap);
-        
-        ctx.fillStyle = rgbToHex(...pixel.rgb);
+        const px = x * (cellSize + gap);
+        const py = y * (cellSize + gap);
         
         ctx.beginPath();
-        ctx.roundRect(px, py, pixelSize, pixelSize, 2);
+        ctx.arc(px + cellSize / 2, py + cellSize / 2, cellSize / 2 - 2, 0, Math.PI * 2);
+        ctx.fillStyle = rgbToHex(...pixel.rgb);
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.arc(px + cellSize / 2 - 6, py + cellSize / 2 - 6, cellSize / 8, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255,255,255,0.3)";
         ctx.fill();
         
         const textColor = isLightColor(pixel.rgb) ? "#333333" : "#ffffff";
         ctx.fillStyle = textColor;
-        ctx.font = `bold ${pixelSize * 0.4}px Arial`;
+        ctx.font = `bold ${cellSize * 0.45}px Arial`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(pixel.color.code, px + pixelSize / 2, py + pixelSize / 2);
+        ctx.fillText(pixel.color.code, px + cellSize / 2, py + cellSize / 2);
       });
     });
     
