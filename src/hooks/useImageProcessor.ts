@@ -25,18 +25,36 @@ export function useImageProcessor() {
     
     for (let y = 0; y < height; y++) {
       const row: ProcessedPixel[] = [];
-      const srcY = Math.floor((y / height) * srcHeight);
       
       for (let x = 0; x < width; x++) {
-        const srcX = Math.floor((x / width) * srcWidth);
-        const srcIndex = (srcY * srcWidth + srcX) * 4;
+        const srcXStart = (x / width) * srcWidth;
+        const srcXEnd = ((x + 1) / width) * srcWidth;
+        const srcYStart = (y / height) * srcHeight;
+        const srcYEnd = ((y + 1) / height) * srcHeight;
         
-        const r = data[srcIndex];
-        const g = data[srcIndex + 1];
-        const b = data[srcIndex + 2];
+        const startX = Math.floor(srcXStart);
+        const endX = Math.ceil(srcXEnd);
+        const startY = Math.floor(srcYStart);
+        const endY = Math.ceil(srcYEnd);
         
-        const color = findClosestPerlerColor(r, g, b);
-        row.push({ color, rgb: [r, g, b] });
+        let totalR = 0, totalG = 0, totalB = 0, count = 0;
+        
+        for (let sy = startY; sy < endY && sy < srcHeight; sy++) {
+          for (let sx = startX; sx < endX && sx < srcWidth; sx++) {
+            const srcIndex = (sy * srcWidth + sx) * 4;
+            totalR += data[srcIndex];
+            totalG += data[srcIndex + 1];
+            totalB += data[srcIndex + 2];
+            count++;
+          }
+        }
+        
+        const avgR = count > 0 ? Math.round(totalR / count) : 0;
+        const avgG = count > 0 ? Math.round(totalG / count) : 0;
+        const avgB = count > 0 ? Math.round(totalB / count) : 0;
+        
+        const color = findClosestPerlerColor(avgR, avgG, avgB);
+        row.push({ color, rgb: [avgR, avgG, avgB] });
       }
       pixels.push(row);
     }
