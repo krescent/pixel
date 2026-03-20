@@ -20,8 +20,9 @@ export function ImageUploader({
   cropPosition,
 }: ImageUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [displaySize, setDisplaySize] = useState({ width: 0, height: 0 });
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0, cropX: 0, cropY: 0 });
+  const [cropDisplay, setCropDisplay] = useState({ x: 0, y: 0, size: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
 
   const processFile = useCallback((file: File) => {
@@ -44,24 +45,47 @@ export function ImageUploader({
     reader.readAsDataURL(file);
   }, [onImageLoad]);
 
-  useEffect(() => {
-    const updateDisplaySize = () => {
-      if (imgRef.current) {
-        setDisplaySize({
-          width: imgRef.current.clientWidth,
-          height: imgRef.current.clientHeight,
-        });
-      }
-    };
+  const updateCropDisplay = useCallback(() => {
+    if (!containerRef.current || !imgRef.current || imageWidth === 0 || imageHeight === 0) return;
     
-    const observer = new ResizeObserver(updateDisplaySize);
-    if (imgRef.current) {
-      observer.observe(imgRef.current);
-      updateDisplaySize();
+    const container = containerRef.current;
+    const img = imgRef.current;
+    
+    const containerRect = container.getBoundingClientRect();
+    const imgRect = img.getBoundingClientRect();
+    
+    const offsetX = imgRect.left - containerRect.left;
+    const offsetY = imgRect.top - containerRect.top;
+    
+    const scaleX = img.naturalWidth / img.clientWidth;
+    const scaleY = img.naturalHeight / img.clientHeight;
+    
+    const displayCropSize = cropSize / scaleX;
+    
+    setCropDisplay({
+      x: offsetX + cropPosition.x / scaleX,
+      y: offsetY + cropPosition.y / scaleY,
+      size: displayCropSize,
+    });
+  }, [cropPosition, cropSize, imageWidth, imageHeight]);
+
+  useEffect(() => {
+    updateCropDisplay();
+    
+    const observer = new ResizeObserver(updateCropDisplay);
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
     }
     
-    return () => observer.disconnect();
-  }, [imageUrl]);
+    window.addEventListener('resize', updateCropDisplay);
+    window.addEventListener('scroll', updateCropDisplay);
+    
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateCropDisplay);
+      window.removeEventListener('scroll', updateCropDisplay);
+    };
+  }, [updateCropDisplay]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -83,45 +107,42 @@ export function ImageUploader({
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
-    setDragStart({ x: e.clientX, y: e.clientY });
-  }, []);
+    setDragStart({ 
+      x: e.clientX, 
+      y: e.clientY,
+      cropX: cropPosition.x,
+      cropY: cropPosition.y
+    });
+  }, [cropPosition]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging) return;
+    if (!isDragging || !imgRef.current) return;
 
-    const scaleX = displaySize.width / imageWidth;
-    const scaleY = displaySize.height / imageHeight;
+    const img = imgRef.current;
+    const scaleX = img.naturalWidth / img.clientWidth;
+    const scaleY = img.naturalHeight / img.clientHeight;
 
-    const dx = (e.clientX - dragStart.x) / scaleX;
-    const dy = (e.clientY - dragStart.y) / scaleY;
+    const dx = (e.clientX - dragStart.x) * scaleX;
+    const dy = (e.clientY - dragStart.y) * scaleY;
 
     const maxX = imageWidth - cropSize;
     const maxY = imageHeight - cropSize;
 
-    const newX = Math.max(0, Math.min(maxX, cropPosition.x + dx));
-    const newY = Math.max(0, Math.min(maxY, cropPosition.y + dy));
+    const newX = Math.max(0, Math.min(maxX, dragStart.cropX + dx));
+    const newY = Math.max(0, Math.min(maxY, dragStart.cropY + dy));
 
     onCropPositionChange(Math.round(newX), Math.round(newY));
-    setDragStart({ x: e.clientX, y: e.clientY });
-  }, [isDragging, dragStart, displaySize, imageWidth, imageHeight, cropSize, cropPosition, onCropPositionChange]);
+  }, [isDragging, dragStart, imageWidth, imageHeight, cropSize, onCropPositionChange]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
   }, []);
 
-  useEffect(() => {
-    const handleGlobalMouseUp = () => setIsDragging(false);
-    window.addEventListener('mouseup', handleGlobalMouseUp);
-    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
-  }, []);
-
   if (imageUrl) {
-    const scaleX = displaySize.width / imageWidth;
-    const scaleY = displaySize.height / imageHeight;
-
     return (
       <div className="h-full flex flex-col">
         <div 
+          ref={containerRef}
           className="flex-1 overflow-hidden flex items-center justify-center bg-gray-100 rounded-xl border border-gray-200 relative"
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
@@ -137,10 +158,10 @@ export function ImageUploader({
           <div
             className="absolute border-4 border-blue-500 bg-blue-500/20 cursor-move group"
             style={{
-              left: `${cropPosition.x * scaleX}px`,
-              top: `${cropPosition.y * scaleY}px`,
-              width: `${cropSize * scaleX}px`,
-              height: `${cropSize * scaleY}px`,
+              left: `${cropDisplay.x}px`,
+              top: `${cropDisplay.y}px`,
+              width: `${cropDisplay.size}px`,
+              height: `${cropDisplay.size}px`,
             }}
             onMouseDown={handleMouseDown}
           >
