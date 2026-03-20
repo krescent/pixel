@@ -9,27 +9,26 @@ interface PerlerGridProps {
 
 export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
+  const [cellSize, setCellSize] = useState(16);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const updateScale = () => {
+    const updateSize = () => {
       const rect = container.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) return;
 
       const padding = 32;
-      const fitScale = Math.min(
-        (rect.width - padding) / displayWidth,
-        (rect.height - padding) / displayWidth
-      );
-      setScale(fitScale);
+      const availableWidth = rect.width - padding;
+      const availableHeight = rect.height - padding;
+      const size = Math.min(availableWidth, availableHeight, displayWidth);
+      setCellSize(size);
     };
 
-    updateScale();
+    updateSize();
 
-    const observer = new ResizeObserver(updateScale);
+    const observer = new ResizeObserver(updateSize);
     observer.observe(container);
     return () => observer.disconnect();
   }, [displayWidth]);
@@ -37,20 +36,20 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
   if (pixels.length === 0) return null;
 
   const width = pixels[0]?.length ?? 0;
-  const cellSize = displayWidth * scale;
-  const showCode = cellSize / width >= 10;
+  const gridWidth = width * cellSize;
+  const gridHeight = width * cellSize;
+  const showCode = cellSize >= 10;
 
   return (
     <div 
       ref={containerRef}
-      className="overflow-hidden bg-gray-500 rounded-xl p-4"
-      style={{ width: '100%', height: '100%' }}
+      className="flex items-center justify-center bg-gray-500 rounded-xl p-4 w-full h-full overflow-hidden"
     >
       <div 
-        className="mx-auto my-auto"
         style={{
-          width: `${cellSize}px`,
-          height: `${cellSize}px`,
+          width: `${gridWidth}px`,
+          height: `${gridHeight}px`,
+          flexShrink: 0,
         }}
       >
         <div 
@@ -69,7 +68,7 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
                 style={{
                   backgroundColor: rgbToHex(...pixel.rgb),
                   color: textColor,
-                  fontSize: `${Math.max(4, cellSize / width * 0.5)}px`,
+                  fontSize: `${Math.max(4, cellSize * 0.35)}px`,
                   boxShadow: "inset 0 -2px 4px rgba(0,0,0,0.2), inset 0 2px 4px rgba(255,255,255,0.3)",
                 }}
                 title={`${pixel.color.code} - ${pixel.color.name}`}
