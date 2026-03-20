@@ -16,6 +16,7 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
     
     const colorCounts = new Map<string, { code: string; count: number; rgb: [number, number, number] }>();
     pixels.flat().forEach(p => {
+      if (p.transparent) return;
       const code = p.color.code;
       if (colorCounts.has(code)) {
         colorCounts.get(code)!.count++;

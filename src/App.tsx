@@ -137,6 +137,7 @@ function App() {
                   {(() => {
                     const colorCounts = new Map<string, { count: number; rgb: [number, number, number]; name: string }>();
                     processed.pixels.flat().forEach(p => {
+                      if (p.transparent) return;
                       const code = p.color.code;
                       if (colorCounts.has(code)) {
                         colorCounts.get(code)!.count++;
