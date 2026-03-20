@@ -1,12 +1,28 @@
-import { useCallback, useState } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 
 interface ImageUploaderProps {
   onImageLoad: (imageData: ImageData, url: string) => void;
   imageUrl: string | null;
+  imageWidth: number;
+  imageHeight: number;
+  crop: { x: number; y: number; width: number; height: number };
+  onCropChange: (crop: { x: number; y: number; width: number; height: number }) => void;
 }
 
-export function ImageUploader({ onImageLoad, imageUrl }: ImageUploaderProps) {
+export function ImageUploader({
+  onImageLoad,
+  imageUrl,
+  imageWidth,
+  imageHeight,
+  crop,
+  onCropChange,
+}: ImageUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const [isPanning, setIsPanning] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [imgScale, setImgScale] = useState(1);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   const processFile = useCallback((file: File) => {
     const reader = new FileReader();
@@ -28,6 +44,16 @@ export function ImageUploader({ onImageLoad, imageUrl }: ImageUploaderProps) {
     reader.readAsDataURL(file);
   }, [onImageLoad]);
 
+  useEffect(() => {
+    if (imgRef.current) {
+      const handleLoad = () => {
+        setImgScale(imgRef.current!.clientWidth / imageWidth);
+      };
+      imgRef.current.addEventListener('load', handleLoad);
+      handleLoad();
+    }
+  }, [imageUrl, imageWidth]);
+
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
@@ -44,12 +70,70 @@ export function ImageUploader({ onImageLoad, imageUrl }: ImageUploaderProps) {
     }
   }, [processFile]);
 
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsPanning(true);
+    setDragStart({ x: e.clientX, y: e.clientY });
+  }, []);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isPanning) return;
+
+    const dx = (e.clientX - dragStart.x) / imgScale;
+    const dy = (e.clientY - dragStart.y) / imgScale;
+
+    const newX = Math.max(0, Math.min(imageWidth - crop.width, crop.x + dx));
+    const newY = Math.max(0, Math.min(imageHeight - crop.height, crop.y + dy));
+
+    onCropChange({ x: newX, y: newY, width: crop.width, height: crop.height });
+    setDragStart({ x: e.clientX, y: e.clientY });
+  }, [isPanning, dragStart, imgScale, imageWidth, imageHeight, crop, onCropChange]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsPanning(false);
+  }, []);
+
+  useEffect(() => {
+    const handleGlobalMouseUp = () => setIsPanning(false);
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+  }, []);
+
   if (imageUrl) {
     return (
       <div className="h-full flex flex-col">
-        <div className="flex-1 overflow-auto flex items-center justify-center bg-gray-50 rounded-xl border border-gray-200">
-          <img src={imageUrl} alt="Preview" className="max-w-full max-h-full object-contain" />
+        <div 
+          ref={containerRef}
+          className="flex-1 overflow-hidden flex items-center justify-center bg-gray-100 rounded-xl border border-gray-200 relative"
+        >
+          <img 
+            ref={imgRef}
+            src={imageUrl} 
+            alt="Preview" 
+            className="max-w-full max-h-full object-contain select-none"
+            draggable={false}
+          />
+          
+          <div
+            className="absolute cursor-move group"
+            style={{
+              left: `${crop.x * imgScale}px`,
+              top: `${crop.y * imgScale}px`,
+              width: `${crop.width * imgScale}px`,
+              height: `${crop.height * imgScale}px`,
+            }}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+          >
+            <div className="absolute inset-0 border-4 border-blue-500 bg-blue-500/10 hover:bg-blue-500/20 transition-colors" />
+            <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+              拖动调整取景框
+            </div>
+          </div>
         </div>
+        
         <div className="mt-4 flex justify-center">
           <label className="cursor-pointer px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
             <input
