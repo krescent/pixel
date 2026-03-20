@@ -130,7 +130,7 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
     ctx.fillText("颜色清单:", axisWidth, gridBottom);
     
     const colWidth = (width * cellSize) / 10;
-    const swatchSize = Math.min(colWidth - 10, 50);
+    const swatchSize = Math.min(colWidth - 10, 36);
     stats.forEach((stat, idx) => {
       const col = idx % 10;
       const row = Math.floor(idx / 10);
@@ -139,22 +139,21 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
       
       const rgb = (stat as { code: string; count: number; rgb: [number, number, number] }).rgb;
       
-      ctx.beginPath();
-      ctx.arc(x + swatchSize / 2, y + swatchSize / 2, swatchSize / 2 - 2, 0, Math.PI * 2);
       ctx.fillStyle = rgbToHex(...rgb);
-      ctx.fill();
-      
-      ctx.beginPath();
-      ctx.arc(x + swatchSize / 2 - swatchSize * 0.15, y + swatchSize / 2 - swatchSize * 0.15, swatchSize / 6, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(255,255,255,0.3)";
-      ctx.fill();
+      ctx.fillRect(x, y, swatchSize, swatchSize);
       
       const textColor = isLightColor(rgb) ? "#333333" : "#ffffff";
       ctx.fillStyle = textColor;
-      ctx.font = `bold ${swatchSize * 0.4}px Arial`;
+      ctx.font = `bold ${swatchSize * 0.5}px Arial`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(stat.code, x + swatchSize / 2, y + swatchSize / 2);
+      
+      ctx.fillStyle = "#333333";
+      ctx.font = "11px Arial";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(`x${stat.count}`, x + swatchSize + 4, y + swatchSize / 2);
     });
     
     const link = document.createElement("a");
