@@ -82,14 +82,19 @@ export function useImageProcessor() {
           rgb = [255, 255, 255];
           transparent = true;
         } else {
+          let totalWeight = 0;
           let maxEntry = { weight: 0, color: WHITE_COLOR, r: 255, g: 255, b: 255 };
           for (const entry of colorWeights.values()) {
-            if (entry.weight > maxEntry.weight) {
+            totalWeight += entry.weight;
+            const luminance = 0.299 * entry.r + 0.587 * entry.g + 0.114 * entry.b;
+            const maxLuminance = 0.299 * maxEntry.r + 0.587 * maxEntry.g + 0.114 * maxEntry.b;
+            if (entry.weight > maxEntry.weight || 
+                (entry.weight === maxEntry.weight && luminance < maxLuminance)) {
               maxEntry = entry;
             }
           }
           
-          if (maxEntry.weight < totalArea * 0.5) {
+          if (totalWeight < totalArea * 0.5) {
             color = WHITE_COLOR;
             rgb = [255, 255, 255];
             transparent = true;
