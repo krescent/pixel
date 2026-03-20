@@ -91,19 +91,23 @@ function App() {
 
         <div className="flex-1 p-6 overflow-auto">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 h-full flex flex-col">
-            <div className="flex items-center justify-between px-4 pt-4 mb-4">
-              <h2 className="text-lg font-semibold text-gray-700">拼豆图样预览</h2>
-              {processed && <DownloadButton pixels={processed.pixels} />}
-            </div>
-            <div className="flex-1 px-4 pb-4 flex items-center justify-center">
-              {processed ? (
-                <PerlerGrid 
-                  pixels={processed.pixels} 
-                  displayWidth={shortEdge}
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
-                  <p>上传图片后将显示拼豆图样</p>
+            <h2 className="text-lg font-semibold text-gray-700 px-4 pt-4 mb-4">拼豆图样预览</h2>
+            <div className="flex-1 px-4 pb-4 flex flex-col">
+              <div className="flex-1 flex items-center justify-center">
+                {processed ? (
+                  <PerlerGrid 
+                    pixels={processed.pixels} 
+                    displayWidth={shortEdge}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
+                    <p>上传图片后将显示拼豆图样</p>
+                  </div>
+                )}
+              </div>
+              {processed && (
+                <div className="mt-4 flex justify-center">
+                  <DownloadButton pixels={processed.pixels} />
                 </div>
               )}
             </div>

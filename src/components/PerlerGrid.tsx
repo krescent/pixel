@@ -11,30 +11,36 @@ interface PerlerGridProps {
 export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const scaleRef = useRef(1);
 
   const handleWheel = useCallback((e: WheelEvent<HTMLDivElement>) => {
     e.preventDefault();
     const container = containerRef.current;
     if (!container) return;
 
-    const rect = container.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left + container.scrollLeft;
-    const mouseY = e.clientY - rect.top + container.scrollTop;
-
-    const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    const newScale = Math.max(0.5, Math.min(10, scale * (1 + delta)));
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    const newScale = Math.max(0.5, Math.min(10, scaleRef.current * delta));
     
-    const scaleRatio = newScale / scale;
-    const newScrollX = mouseX * scaleRatio - (e.clientX - rect.left);
-    const newScrollY = mouseY * scaleRatio - (e.clientY - rect.top);
-
+    const rect = container.getBoundingClientRect();
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    
+    const currentScrollX = container.scrollLeft;
+    const currentScrollY = container.scrollTop;
+    const currentCenterX = currentScrollX + centerX;
+    const currentCenterY = currentScrollY + centerY;
+    
+    const newCenterX = currentCenterX * (newScale / scaleRef.current);
+    const newCenterY = currentCenterY * (newScale / scaleRef.current);
+    
+    scaleRef.current = newScale;
     setScale(newScale);
     
     requestAnimationFrame(() => {
-      container.scrollLeft = newScrollX;
-      container.scrollTop = newScrollY;
+      container.scrollLeft = newCenterX - centerX;
+      container.scrollTop = newCenterY - centerY;
     });
-  }, [scale]);
+  }, [displayWidth]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -42,17 +48,18 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
 
     const updateSize = () => {
       const rect = container.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
       
-      const totalSize = displayWidth;
       const fitScale = Math.min(
-        rect.width / totalSize,
-        rect.height / totalSize
+        rect.width / displayWidth,
+        rect.height / displayWidth
       );
       
+      scaleRef.current = fitScale;
       setScale(fitScale);
       
-      const scrollX = (totalSize * fitScale - rect.width) / 2;
-      const scrollY = (totalSize * fitScale - rect.height) / 2;
+      const scrollX = (displayWidth * fitScale - rect.width) / 2;
+      const scrollY = (displayWidth * fitScale - rect.height) / 2;
       container.scrollLeft = scrollX;
       container.scrollTop = scrollY;
     };
@@ -68,8 +75,8 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
   if (pixels.length === 0) return null;
 
   const width = pixels[0]?.length ?? 0;
-  const totalSize = displayWidth;
-  const displaySize = totalSize * scale;
+  const displaySize = displayWidth * scale;
+  const showCode = displaySize / width >= 8;
 
   return (
     <div 
@@ -108,7 +115,7 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
                 }}
                 title={`${pixel.color.code} - ${pixel.color.name}`}
               >
-                {displaySize / width >= 8 && pixel.color.code}
+                {showCode && pixel.color.code}
               </div>
             );
           })}
