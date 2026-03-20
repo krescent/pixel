@@ -97,7 +97,7 @@ function App() {
             </div>
             <div className="flex-1 px-4 pb-4 overflow-auto flex items-center justify-center">
               {processed ? (
-                <PerlerGrid pixels={processed.pixels} beadSize={beadSize} />
+                <PerlerGrid pixels={processed.pixels} />
               ) : (
                 <div className="w-full h-64 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
                   <p>上传图片后将显示拼豆图样</p>

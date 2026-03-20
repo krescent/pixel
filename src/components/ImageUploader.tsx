@@ -21,8 +21,7 @@ export function ImageUploader({
 }: ImageUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [imgScale, setImgScale] = useState(1);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [displaySize, setDisplaySize] = useState({ width: 0, height: 0 });
   const imgRef = useRef<HTMLImageElement>(null);
 
   const processFile = useCallback((file: File) => {
@@ -46,18 +45,23 @@ export function ImageUploader({
   }, [onImageLoad]);
 
   useEffect(() => {
+    const updateDisplaySize = () => {
+      if (imgRef.current) {
+        setDisplaySize({
+          width: imgRef.current.clientWidth,
+          height: imgRef.current.clientHeight,
+        });
+      }
+    };
+    
+    const observer = new ResizeObserver(updateDisplaySize);
     if (imgRef.current) {
-      const updateScale = () => {
-        setImgScale(imgRef.current!.clientWidth / imageWidth);
-      };
-      
-      const observer = new ResizeObserver(updateScale);
       observer.observe(imgRef.current);
-      updateScale();
-      
-      return () => observer.disconnect();
+      updateDisplaySize();
     }
-  }, [imageUrl, imageWidth]);
+    
+    return () => observer.disconnect();
+  }, [imageUrl]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -83,10 +87,13 @@ export function ImageUploader({
   }, []);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging || !imgRef.current) return;
+    if (!isDragging) return;
 
-    const dx = (e.clientX - dragStart.x) / imgScale;
-    const dy = (e.clientY - dragStart.y) / imgScale;
+    const scaleX = displaySize.width / imageWidth;
+    const scaleY = displaySize.height / imageHeight;
+
+    const dx = (e.clientX - dragStart.x) / scaleX;
+    const dy = (e.clientY - dragStart.y) / scaleY;
 
     const maxX = imageWidth - cropSize;
     const maxY = imageHeight - cropSize;
@@ -96,7 +103,7 @@ export function ImageUploader({
 
     onCropPositionChange(Math.round(newX), Math.round(newY));
     setDragStart({ x: e.clientX, y: e.clientY });
-  }, [isDragging, dragStart, imgScale, imageWidth, imageHeight, cropSize, cropPosition, onCropPositionChange]);
+  }, [isDragging, dragStart, displaySize, imageWidth, imageHeight, cropSize, cropPosition, onCropPositionChange]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -109,11 +116,15 @@ export function ImageUploader({
   }, []);
 
   if (imageUrl) {
+    const scaleX = displaySize.width / imageWidth;
+    const scaleY = displaySize.height / imageHeight;
+
     return (
       <div className="h-full flex flex-col">
         <div 
-          ref={containerRef}
           className="flex-1 overflow-hidden flex items-center justify-center bg-gray-100 rounded-xl border border-gray-200 relative"
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
         >
           <img 
             ref={imgRef}
@@ -126,14 +137,12 @@ export function ImageUploader({
           <div
             className="absolute border-4 border-blue-500 bg-blue-500/20 cursor-move group"
             style={{
-              left: `${cropPosition.x * imgScale}px`,
-              top: `${cropPosition.y * imgScale}px`,
-              width: `${cropSize * imgScale}px`,
-              height: `${cropSize * imgScale}px`,
+              left: `${cropPosition.x * scaleX}px`,
+              top: `${cropPosition.y * scaleY}px`,
+              width: `${cropSize * scaleX}px`,
+              height: `${cropSize * scaleY}px`,
             }}
             onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
           >
             <div className="absolute inset-0 border-2 border-white/50" />
             <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">

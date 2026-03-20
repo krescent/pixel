@@ -3,37 +3,35 @@ import { rgbToHex } from "../utils/colorMatching";
 
 interface PerlerGridProps {
   pixels: ProcessedPixel[][];
-  beadSize: number;
 }
 
-export function PerlerGrid({ pixels, beadSize }: PerlerGridProps) {
+export function PerlerGrid({ pixels }: PerlerGridProps) {
   if (pixels.length === 0) return null;
 
   const width = pixels[0]?.length ?? 0;
-  const beadPx = beadSize;
-  const gap = 1;
+  const displaySize = 16;
 
   return (
     <div 
-      className="inline-grid border border-gray-300"
+      className="inline-grid border border-gray-400"
       style={{
-        gridTemplateColumns: `repeat(${width}, ${beadPx}px)`,
-        gap: `${gap}px`,
+        gridTemplateColumns: `repeat(${width}, ${displaySize}px)`,
+        gap: '1px',
       }}
     >
       {pixels.flat().map((pixel, index) => (
         <div
           key={index}
-          className="rounded-full flex items-center justify-center text-[2px] font-bold text-gray-600 select-none"
+          className="rounded-sm flex items-center justify-center text-[3px] font-bold text-gray-800 select-none"
           style={{
-            width: `${beadPx}px`,
-            height: `${beadPx}px`,
+            width: `${displaySize}px`,
+            height: `${displaySize}px`,
             backgroundColor: rgbToHex(...pixel.color.rgb),
-            boxShadow: "inset 0 -2px 4px rgba(0,0,0,0.2), inset 0 2px 4px rgba(255,255,255,0.3)",
+            boxShadow: "inset 0 -1px 2px rgba(0,0,0,0.2), inset 0 1px 2px rgba(255,255,255,0.3)",
           }}
-          title={`${pixel.color.code} - ${rgbToHex(...pixel.color.rgb)}`}
+          title={`${pixel.color.code} - ${pixel.color.name}`}
         >
-          {beadPx >= 8 && pixel.color.code}
+          {pixel.color.code}
         </div>
       ))}
     </div>
