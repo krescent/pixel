@@ -9,7 +9,7 @@ interface PerlerGridProps {
 
 export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [cellSize, setCellSize] = useState(16);
+  const [dimensions, setDimensions] = useState({ cellSize: 16, gridSize: 16 });
 
   useEffect(() => {
     const container = containerRef.current;
@@ -22,8 +22,15 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
       const padding = 32;
       const availableWidth = rect.width - padding;
       const availableHeight = rect.height - padding;
-      const size = Math.min(availableWidth, availableHeight, displayWidth);
-      setCellSize(size);
+      
+      const maxCellByWidth = Math.floor(availableWidth / displayWidth);
+      const maxCellByHeight = Math.floor(availableHeight / displayWidth);
+      const cellSize = Math.min(maxCellByWidth, maxCellByHeight, 20);
+      
+      setDimensions({
+        cellSize,
+        gridSize: displayWidth * cellSize + (displayWidth - 1)
+      });
     };
 
     updateSize();
@@ -36,9 +43,7 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
   if (pixels.length === 0) return null;
 
   const width = pixels[0]?.length ?? 0;
-  const gridWidth = width * cellSize;
-  const gridHeight = width * cellSize;
-  const showCode = cellSize >= 10;
+  const showCode = dimensions.cellSize >= 10;
 
   return (
     <div 
@@ -47,8 +52,8 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
     >
       <div 
         style={{
-          width: `${gridWidth}px`,
-          height: `${gridHeight}px`,
+          width: `${dimensions.gridSize}px`,
+          height: `${dimensions.gridSize}px`,
           flexShrink: 0,
         }}
       >
@@ -68,7 +73,7 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
                 style={{
                   backgroundColor: rgbToHex(...pixel.rgb),
                   color: textColor,
-                  fontSize: `${Math.max(4, cellSize * 0.35)}px`,
+                  fontSize: `${Math.max(4, dimensions.cellSize * 0.35)}px`,
                   boxShadow: "inset 0 -2px 4px rgba(0,0,0,0.2), inset 0 2px 4px rgba(255,255,255,0.3)",
                 }}
                 title={`${pixel.color.code} - ${pixel.color.name}`}
