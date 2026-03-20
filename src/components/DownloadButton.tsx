@@ -29,30 +29,30 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
       return;
     }
     
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     pixels.forEach((row, y) => {
       row.forEach((pixel, x) => {
         const px = x * (pixelSize + gap);
         const py = y * (pixelSize + gap);
         
-        if (!pixel.transparent) {
-          ctx.beginPath();
-          ctx.arc(px + pixelSize / 2, py + pixelSize / 2, pixelSize / 2 - 2, 0, Math.PI * 2);
-          ctx.fillStyle = rgbToHex(...pixel.rgb);
-          ctx.fill();
-          
-          ctx.beginPath();
-          ctx.arc(px + pixelSize / 2 - 4, py + pixelSize / 2 - 4, pixelSize / 6, 0, Math.PI * 2);
-          ctx.fillStyle = "rgba(255,255,255,0.35)";
-          ctx.fill();
-          
-          ctx.fillStyle = "#000000";
-          ctx.font = `bold ${Math.max(8, pixelSize / 4)}px Arial`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText(pixel.color?.code ?? '?', px + pixelSize / 2, py + pixelSize / 2);
-        }
+        ctx.beginPath();
+        ctx.arc(px + pixelSize / 2, py + pixelSize / 2, pixelSize / 2 - 2, 0, Math.PI * 2);
+        ctx.fillStyle = rgbToHex(...pixel.rgb);
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.arc(px + pixelSize / 2 - 4, py + pixelSize / 2 - 4, pixelSize / 6, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255,255,255,0.35)";
+        ctx.fill();
+        
+        const textColor = isLightColor(pixel.rgb) ? "#000000" : "#ffffff";
+        ctx.fillStyle = textColor;
+        ctx.font = `bold ${Math.max(10, pixelSize / 3)}px Arial`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(pixel.color.code, px + pixelSize / 2, py + pixelSize / 2);
       });
     });
     
@@ -74,4 +74,10 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
       {isGenerating ? "生成中..." : "下载 PNG"}
     </button>
   );
+}
+
+function isLightColor(rgb: [number, number, number]): boolean {
+  const [r, g, b] = rgb;
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.5;
 }
