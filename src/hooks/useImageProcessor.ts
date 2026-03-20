@@ -42,7 +42,7 @@ export function useImageProcessor() {
         const endY = Math.ceil(srcYEnd);
         
         const totalArea = (srcXEnd - srcXStart) * (srcYEnd - srcYStart);
-        let totalR = 0, totalG = 0, totalB = 0, totalWeight = 0;
+        let dominantR = 0, dominantG = 0, dominantB = 0, maxWeight = 0;
         
         for (let sy = startY; sy < endY && sy < srcHeight; sy++) {
           for (let sx = startX; sx < endX && sx < srcWidth; sx++) {
@@ -56,12 +56,12 @@ export function useImageProcessor() {
             
             const weight = (overlapRight - overlapLeft) * (overlapBottom - overlapTop);
             
-            if (a < 128) continue;
+            if (a < 128 || weight <= maxWeight) continue;
             
-            totalR += data[srcIndex] * weight;
-            totalG += data[srcIndex + 1] * weight;
-            totalB += data[srcIndex + 2] * weight;
-            totalWeight += weight;
+            maxWeight = weight;
+            dominantR = data[srcIndex];
+            dominantG = data[srcIndex + 1];
+            dominantB = data[srcIndex + 2];
           }
         }
         
@@ -69,16 +69,13 @@ export function useImageProcessor() {
         let rgb: [number, number, number];
         let transparent = false;
         
-        if (totalWeight === 0 || totalWeight < totalArea * 0.5) {
+        if (maxWeight === 0 || maxWeight < totalArea * 0.5) {
           color = WHITE_COLOR;
           rgb = [255, 255, 255];
           transparent = true;
         } else {
-          const avgR = Math.round(totalR / totalWeight);
-          const avgG = Math.round(totalG / totalWeight);
-          const avgB = Math.round(totalB / totalWeight);
-          color = findClosestPerlerColor(avgR, avgG, avgB);
-          rgb = [avgR, avgG, avgB];
+          color = findClosestPerlerColor(dominantR, dominantG, dominantB);
+          rgb = [dominantR, dominantG, dominantB];
         }
         
         row.push({ color, rgb, transparent });
