@@ -11,11 +11,8 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const scaleRef = useRef(1);
   const [scale, setScale] = useState(1);
-  const isUserZooming = useRef(false);
 
   const fitToContainer = useCallback(() => {
-    if (isUserZooming.current) return;
-    
     const container = containerRef.current;
     if (!container) return;
 
@@ -40,7 +37,6 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
   }, [displayWidth]);
 
   useEffect(() => {
-    isUserZooming.current = false;
     fitToContainer();
   }, [fitToContainer, displayWidth]);
 
@@ -48,11 +44,7 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
     const container = containerRef.current;
     if (!container) return;
 
-    const observer = new ResizeObserver(() => {
-      if (!isUserZooming.current) {
-        fitToContainer();
-      }
-    });
+    const observer = new ResizeObserver(fitToContainer);
     observer.observe(container);
     return () => observer.disconnect();
   }, [fitToContainer]);
@@ -62,13 +54,25 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
     const container = containerRef.current;
     if (!container) return;
 
-    isUserZooming.current = true;
-    
     const rect = container.getBoundingClientRect();
+    const padding = 32;
+    const minScale = Math.min(
+      (rect.width - padding) / displayWidth,
+      (rect.height - padding) / displayWidth
+    );
+
     const oldScale = scaleRef.current;
-    
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    const newScale = Math.max(0.5, Math.min(10, oldScale * delta));
+    let newScale = oldScale * delta;
+
+    if (newScale < minScale) {
+      scaleRef.current = minScale;
+      setScale(minScale);
+      fitToContainer();
+      return;
+    }
+
+    newScale = Math.min(10, newScale);
     scaleRef.current = newScale;
     setScale(newScale);
 
