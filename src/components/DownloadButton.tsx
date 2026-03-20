@@ -46,8 +46,27 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    ctx.strokeStyle = "#ddd";
-    ctx.lineWidth = 0.5;
+    pixels.forEach((row, y) => {
+      row.forEach((pixel, x) => {
+        if (pixel.transparent) return;
+        
+        const px = x * cellSize + axisWidth;
+        const py = y * cellSize + axisWidth;
+        
+        ctx.fillStyle = rgbToHex(...pixel.rgb);
+        ctx.fillRect(px, py, cellSize, cellSize);
+        
+        const textColor = isLightColor(pixel.rgb) ? "#333333" : "#ffffff";
+        ctx.fillStyle = textColor;
+        ctx.font = `bold ${cellSize * 0.35}px Arial`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(pixel.color.code, px + cellSize / 2, py + cellSize / 2);
+      });
+    });
+    
+    ctx.strokeStyle = "#333333";
+    ctx.lineWidth = 1;
     for (let x = 0; x <= width; x++) {
       ctx.beginPath();
       ctx.moveTo(x * cellSize + axisWidth, axisWidth);
@@ -75,25 +94,6 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
       ctx.lineTo(width * cellSize + axisWidth, y * cellSize + axisWidth);
       ctx.stroke();
     }
-    
-    pixels.forEach((row, y) => {
-      row.forEach((pixel, x) => {
-        if (pixel.transparent) return;
-        
-        const px = x * cellSize + axisWidth;
-        const py = y * cellSize + axisWidth;
-        
-        ctx.fillStyle = rgbToHex(...pixel.rgb);
-        ctx.fillRect(px, py, cellSize, cellSize);
-        
-        const textColor = isLightColor(pixel.rgb) ? "#333333" : "#ffffff";
-        ctx.fillStyle = textColor;
-        ctx.font = `bold ${cellSize * 0.4}px Arial`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(pixel.color.code, px + cellSize / 2, py + cellSize / 2);
-      });
-    });
     
     ctx.strokeStyle = "#000000";
     ctx.lineWidth = 2;
@@ -144,13 +144,13 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
       
       const textColor = isLightColor(rgb) ? "#333333" : "#ffffff";
       ctx.fillStyle = textColor;
-      ctx.font = `bold ${swatchSize * 0.4}px Arial`;
+      ctx.font = `bold ${swatchSize * 0.35}px Arial`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(stat.code, x + swatchSize / 2, y + swatchSize / 2);
       
       ctx.fillStyle = "#333333";
-      ctx.font = `${swatchSize * 0.3}px Arial`;
+      ctx.font = `${swatchSize * 0.35}px Arial`;
       ctx.textAlign = "left";
       ctx.textBaseline = "middle";
       ctx.fillText(`x${stat.count}`, x + swatchSize + 4, y + swatchSize / 2);

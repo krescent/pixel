@@ -136,19 +136,13 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
         style={{ flexShrink: 0 }}
       >
         <defs>
-          <pattern id="grid" width={cellSize} height={cellSize} patternUnits="userSpaceOnUse">
-            <line x1="0" y1="0" x2={cellSize} y2="0" stroke="#ddd" strokeWidth="0.5" />
-            <line x1="0" y1="0" x2="0" y2={cellSize} stroke="#ddd" strokeWidth="0.5" />
-          </pattern>
-          <pattern id="gridMajor" width={cellSize * 5} height={cellSize * 5} patternUnits="userSpaceOnUse">
-            <rect width={cellSize * 5} height={cellSize * 5} fill="url(#grid)" />
-            <line x1="0" y1="0" x2={cellSize * 5} y2="0" stroke="#ff4444" strokeWidth="2" />
-            <line x1="0" y1="0" x2="0" y2={cellSize * 5} stroke="#ff4444" strokeWidth="2" />
+          <pattern id="gridBg" width={cellSize} height={cellSize} patternUnits="userSpaceOnUse">
+            <rect width={cellSize} height={cellSize} fill="white" />
           </pattern>
         </defs>
         
         <g transform={`translate(${axisWidth}, ${axisWidth})`}>
-          <rect x="0" y="0" width={gridSize} height={gridSize} fill="url(#gridMajor)" />
+          <rect x="0" y="0" width={gridSize} height={gridSize} fill="url(#gridBg)" />
           
           {pixels.flat().map((pixel, index) => {
             const x = index % width;
@@ -184,6 +178,29 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
               </g>
             );
           })}
+          
+          {Array.from({ length: width + 1 }).map((_, i) => (
+            <line
+              key={`v-${i}`}
+              x1={i * cellSize}
+              y1={0}
+              x2={i * cellSize}
+              y2={gridSize}
+              stroke={i % 5 === 0 ? "#ff4444" : "#333"}
+              strokeWidth={i % 5 === 0 ? 2 : 1}
+            />
+          ))}
+          {Array.from({ length: displayWidth + 1 }).map((_, i) => (
+            <line
+              key={`h-${i}`}
+              x1={0}
+              y1={i * cellSize}
+              x2={gridSize}
+              y2={i * cellSize}
+              stroke={i % 5 === 0 ? "#ff4444" : "#333"}
+              strokeWidth={i % 5 === 0 ? 2 : 1}
+            />
+          ))}
           
           <rect x="0" y="0" width={gridSize} height={gridSize} fill="none" stroke="#000" strokeWidth="2" />
         </g>
