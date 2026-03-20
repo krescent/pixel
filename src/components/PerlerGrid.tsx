@@ -24,15 +24,17 @@ export function PerlerGrid({ pixels, beadSize }: PerlerGridProps) {
       {pixels.flat().map((pixel, index) => (
         <div
           key={index}
-          className="rounded-full"
+          className="rounded-full flex items-center justify-center text-[2px] font-bold text-gray-600 select-none"
           style={{
             width: `${beadPx}px`,
             height: `${beadPx}px`,
             backgroundColor: rgbToHex(...pixel.color.rgb),
             boxShadow: "inset 0 -2px 4px rgba(0,0,0,0.2), inset 0 2px 4px rgba(255,255,255,0.3)",
           }}
-          title={pixel.color.name}
-        />
+          title={`${pixel.color.code} - ${rgbToHex(...pixel.color.rgb)}`}
+        >
+          {beadPx >= 8 && pixel.color.code}
+        </div>
       ))}
     </div>
   );
