@@ -25,49 +25,70 @@ export function useImageProcessor() {
     const width = srcWidth >= srcHeight ? shortEdge : longEdge;
     const height = srcHeight >= srcWidth ? shortEdge : longEdge;
     
+    const scaleX = srcWidth / width;
+    const scaleY = srcHeight / height;
+    
+    const colorCache = new Map<number, PerlerColor>();
+    const getColor = (r: number, g: number, b: number): PerlerColor => {
+      const key = (r << 16) | (g << 8) | b;
+      let cached = colorCache.get(key);
+      if (!cached) {
+        cached = findClosestPerlerColor(r, g, b);
+        colorCache.set(key, cached);
+      }
+      return cached;
+    };
+    
     const pixels: ProcessedPixel[][] = [];
     
     for (let y = 0; y < height; y++) {
       const row: ProcessedPixel[] = [];
       
       for (let x = 0; x < width; x++) {
-        const srcXStart = (x / width) * srcWidth;
-        const srcXEnd = ((x + 1) / width) * srcWidth;
-        const srcYStart = (y / height) * srcHeight;
-        const srcYEnd = ((y + 1) / height) * srcHeight;
+        const srcXStart = x * scaleX;
+        const srcXEnd = (x + 1) * scaleX;
+        const srcYStart = y * scaleY;
+        const srcYEnd = (y + 1) * scaleY;
         
         const startX = Math.floor(srcXStart);
-        const endX = Math.ceil(srcXEnd);
+        const endX = Math.min(Math.ceil(srcXEnd), srcWidth);
         const startY = Math.floor(srcYStart);
-        const endY = Math.ceil(srcYEnd);
+        const endY = Math.min(Math.ceil(srcYEnd), srcHeight);
         
-        const colorWeights: Map<string, { color: PerlerColor; weight: number; r: number; g: number; b: number }> = new Map();
+        const colorWeights: { code: string; weight: number; r: number; g: number; b: number }[] = [];
+        const colorMap = new Map<string, number>();
         
-        for (let sy = startY; sy < endY && sy < srcHeight; sy++) {
-          for (let sx = startX; sx < endX && sx < srcWidth; sx++) {
+        for (let sy = startY; sy < endY; sy++) {
+          const yFracTop = sy < srcYStart ? srcYStart - sy : 0;
+          const yFracBottom = (sy + 1) > srcYEnd ? (sy + 1) - srcYEnd : 1;
+          const yWeight = Math.min(yFracBottom, 1) - Math.max(yFracTop, 0);
+          
+          for (let sx = startX; sx < endX; sx++) {
             const srcIndex = (sy * srcWidth + sx) * 4;
             const a = data[srcIndex + 3];
             
-            const overlapLeft = Math.max(srcXStart, sx);
-            const overlapRight = Math.min(srcXEnd, sx + 1);
-            const overlapTop = Math.max(srcYStart, sy);
-            const overlapBottom = Math.min(srcYEnd, sy + 1);
-            
-            const weight = (overlapRight - overlapLeft) * (overlapBottom - overlapTop);
-            
             if (a < 128) continue;
+            
+            const xFracLeft = sx < srcXStart ? srcXStart - sx : 0;
+            const xFracRight = (sx + 1) > srcXEnd ? (sx + 1) - srcXEnd : 1;
+            const xWeight = Math.min(xFracRight, 1) - Math.max(xFracLeft, 0);
+            
+            const weight = xWeight * yWeight;
+            if (weight <= 0) continue;
             
             const r = data[srcIndex];
             const g = data[srcIndex + 1];
             const b = data[srcIndex + 2];
-            const perlerColor = findClosestPerlerColor(r, g, b);
-            const key = `${perlerColor.code}`;
+            const perlerColor = getColor(r, g, b);
+            const code = perlerColor.code;
             
-            const existing = colorWeights.get(key);
-            if (existing) {
-              existing.weight += weight;
+            const idx = colorMap.get(code);
+            if (idx !== undefined) {
+              const entry = colorWeights[idx];
+              entry.weight += weight;
             } else {
-              colorWeights.set(key, { color: perlerColor, weight, r, g, b });
+              colorMap.set(code, colorWeights.length);
+              colorWeights.push({ code, weight, r, g, b });
             }
           }
         }
@@ -76,24 +97,26 @@ export function useImageProcessor() {
         let rgb: [number, number, number];
         let transparent = false;
         
-        if (colorWeights.size === 0) {
+        if (colorWeights.length === 0) {
           color = WHITE_COLOR;
           rgb = [255, 255, 255];
           transparent = true;
         } else {
-          let maxEntry: { color: PerlerColor; weight: number; r: number; g: number; b: number } | null = null;
-          for (const entry of colorWeights.values()) {
-            if (!maxEntry || 
-                entry.weight > maxEntry.weight || 
+          let maxEntry = colorWeights[0];
+          let maxLuminance = 0.299 * maxEntry.r + 0.587 * maxEntry.g + 0.114 * maxEntry.b;
+          
+          for (let i = 1; i < colorWeights.length; i++) {
+            const entry = colorWeights[i];
+            if (entry.weight > maxEntry.weight || 
                 (entry.weight === maxEntry.weight && 
-                 (0.299 * entry.r + 0.587 * entry.g + 0.114 * entry.b) < 
-                 (0.299 * maxEntry.r + 0.587 * maxEntry.g + 0.114 * maxEntry.b))) {
+                 (0.299 * entry.r + 0.587 * entry.g + 0.114 * entry.b) < maxLuminance)) {
               maxEntry = entry;
+              maxLuminance = 0.299 * maxEntry.r + 0.587 * maxEntry.g + 0.114 * maxEntry.b;
             }
           }
           
-          color = maxEntry!.color;
-          rgb = [maxEntry!.r, maxEntry!.g, maxEntry!.b];
+          color = getColor(maxEntry.r, maxEntry.g, maxEntry.b);
+          rgb = [maxEntry.r, maxEntry.g, maxEntry.b];
         }
         
         row.push({ color, rgb, transparent });
