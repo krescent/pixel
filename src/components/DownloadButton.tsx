@@ -9,7 +9,7 @@ interface DownloadButtonProps {
 export function DownloadButton({ pixels }: DownloadButtonProps) {
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const downloadImage = useCallback(() => {
+  const downloadImage = useCallback((mirrored: boolean = false) => {
     if (pixels.length === 0) return;
     
     setIsGenerating(true);
@@ -50,7 +50,8 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
       row.forEach((pixel, x) => {
         if (pixel.transparent) return;
         
-        const px = x * cellSize + axisWidth;
+        const drawX = mirrored ? width - 1 - x : x;
+        const px = drawX * cellSize + axisWidth;
         const py = y * cellSize + axisWidth;
         
         ctx.fillStyle = rgbToHex(...pixel.rgb);
@@ -157,7 +158,7 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
     });
     
     const link = document.createElement("a");
-    link.download = "perler-bead-pattern.png";
+    link.download = mirrored ? "perler-bead-pattern-mirrored.png" : "perler-bead-pattern.png";
     link.href = canvas.toDataURL("image/png");
     link.click();
     
@@ -165,14 +166,24 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
   }, [pixels]);
 
   return (
-    <button
-      onClick={downloadImage}
-      disabled={pixels.length === 0 || isGenerating}
-      className="w-full px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-    >
-      <span>⬇️</span>
-      {isGenerating ? "生成中..." : "下载 PNG"}
-    </button>
+    <div className="flex gap-2">
+      <button
+        onClick={() => downloadImage(false)}
+        disabled={pixels.length === 0 || isGenerating}
+        className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+      >
+        <span>⬇️</span>
+        {isGenerating ? "生成中..." : "下载图片"}
+      </button>
+      <button
+        onClick={() => downloadImage(true)}
+        disabled={pixels.length === 0 || isGenerating}
+        className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+      >
+        <span>↔️</span>
+        {isGenerating ? "生成中..." : "下载镜像"}
+      </button>
+    </div>
   );
 }
 
