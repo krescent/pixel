@@ -1,5 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
-import type { WheelEvent } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import type { ProcessedPixel } from "../hooks/useImageProcessor";
 import { rgbToHex } from "../utils/colorMatching";
 
@@ -12,73 +11,79 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const scaleRef = useRef(1);
   const [scale, setScale] = useState(1);
+  const isUserZooming = useRef(false);
 
   const fitToContainer = useCallback(() => {
+    if (isUserZooming.current) return;
+    
     const container = containerRef.current;
     if (!container) return;
 
     const rect = container.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0) return;
 
+    const padding = 32;
     const fitScale = Math.min(
-      rect.width / displayWidth,
-      rect.height / displayWidth
+      (rect.width - padding) / displayWidth,
+      (rect.height - padding) / displayWidth
     );
 
     scaleRef.current = fitScale;
     setScale(fitScale);
-
-    const scrollX = (displayWidth * fitScale - rect.width) / 2;
-    const scrollY = (displayWidth * fitScale - rect.height) / 2;
-    container.scrollLeft = scrollX;
-    container.scrollTop = scrollY;
-  }, [displayWidth]);
-
-  const handleDoubleClick = useCallback(() => {
-    fitToContainer();
-  }, [fitToContainer]);
-
-  const handleWheel = useCallback((e: WheelEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const container = containerRef.current;
-    if (!container) return;
-
-    const rect = container.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    let newScale = scaleRef.current * delta;
-    newScale = Math.max(0.5, Math.min(10, newScale));
-
-    const mouseRatioX = mouseX / (displayWidth * scaleRef.current);
-    const mouseRatioY = mouseY / (displayWidth * scaleRef.current);
-
-    scaleRef.current = newScale;
-    setScale(newScale);
-
+    
     requestAnimationFrame(() => {
-      const newMouseX = mouseRatioX * displayWidth * newScale;
-      const newMouseY = mouseRatioY * displayWidth * newScale;
-      container.scrollLeft = newMouseX - mouseX;
-      container.scrollTop = newMouseY - mouseY;
+      const contentWidth = displayWidth * fitScale;
+      const contentHeight = displayWidth * fitScale;
+      container.scrollLeft = Math.max(0, (contentWidth - rect.width + padding) / 2);
+      container.scrollTop = Math.max(0, (contentHeight - rect.height + padding) / 2);
     });
   }, [displayWidth]);
 
   useEffect(() => {
+    isUserZooming.current = false;
+    fitToContainer();
+  }, [fitToContainer, displayWidth]);
+
+  useEffect(() => {
     const container = containerRef.current;
-    if (!container || pixels.length === 0) return;
+    if (!container) return;
 
-    const timeoutId = setTimeout(fitToContainer, 0);
-
-    const observer = new ResizeObserver(fitToContainer);
+    const observer = new ResizeObserver(() => {
+      if (!isUserZooming.current) {
+        fitToContainer();
+      }
+    });
     observer.observe(container);
+    return () => observer.disconnect();
+  }, [fitToContainer]);
 
-    return () => {
-      clearTimeout(timeoutId);
-      observer.disconnect();
-    };
-  }, [displayWidth, pixels.length, fitToContainer]);
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const container = containerRef.current;
+    if (!container) return;
+
+    isUserZooming.current = true;
+    
+    const rect = container.getBoundingClientRect();
+    const oldScale = scaleRef.current;
+    
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    const newScale = Math.max(0.5, Math.min(10, oldScale * delta));
+    scaleRef.current = newScale;
+    setScale(newScale);
+
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    const contentX = container.scrollLeft + mouseX;
+    const contentY = container.scrollTop + mouseY;
+    
+    const newContentX = (contentX / oldScale) * newScale;
+    const newContentY = (contentY / oldScale) * newScale;
+
+    container.scrollLeft = newContentX - mouseX;
+    container.scrollTop = newContentY - mouseY;
+  };
 
   if (pixels.length === 0) return null;
 
@@ -91,11 +96,7 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
       ref={containerRef}
       className="overflow-auto bg-gray-500 rounded-xl p-4"
       onWheel={handleWheel}
-      onDoubleClick={handleDoubleClick}
-      style={{
-        width: '100%',
-        height: '100%',
-      }}
+      style={{ width: '100%', height: '100%' }}
     >
       <div 
         className="inline-block"
