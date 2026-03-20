@@ -173,7 +173,7 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
         className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
         <span>⬇️</span>
-        {isGenerating ? "生成中..." : "下载图片"}
+        {isGenerating ? "生成中..." : "下载拼豆图"}
       </button>
       <button
         onClick={() => downloadImage(true)}
@@ -181,7 +181,7 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
         className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
         <span>↔️</span>
-        {isGenerating ? "生成中..." : "下载镜像"}
+        {isGenerating ? "生成中..." : "下载毛巾烫图"}
       </button>
     </div>
   );
