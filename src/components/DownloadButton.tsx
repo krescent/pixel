@@ -14,14 +14,27 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
     
     setIsGenerating(true);
     
+    const colorCounts = new Map<string, { code: string; count: number; rgb: [number, number, number] }>();
+    pixels.flat().forEach(p => {
+      const code = p.color.code;
+      if (colorCounts.has(code)) {
+        colorCounts.get(code)!.count++;
+      } else {
+        colorCounts.set(code, { code, count: 1, rgb: p.color.rgb });
+      }
+    });
+    const stats = Array.from(colorCounts.values()).sort((a, b) => b.count - a.count);
+    
     const height = pixels.length;
     const width = pixels[0]?.length ?? 0;
     const cellSize = 40;
     const axisWidth = 40;
     
+    const statsHeight = Math.ceil(stats.length / 10) * 30 + 40;
+    
     const canvas = document.createElement("canvas");
     canvas.width = width * cellSize + axisWidth * 2;
-    canvas.height = height * cellSize + axisWidth * 2;
+    canvas.height = height * cellSize + axisWidth * 2 + statsHeight;
     const ctx = canvas.getContext("2d");
     
     if (!ctx) {
@@ -106,6 +119,34 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
       renderLabel(i, axisWidth / 2, y, isMajor);
       renderLabel(i, axisWidth + width * cellSize + axisWidth / 2, y, isMajor);
     }
+    
+    const gridBottom = height * cellSize + axisWidth * 2 + 20;
+    
+    ctx.fillStyle = "#333333";
+    ctx.font = "bold 14px Arial";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText("颜色清单:", axisWidth, gridBottom);
+    
+    const colWidth = (width * cellSize) / 10;
+    stats.forEach((stat, idx) => {
+      const col = idx % 10;
+      const row = Math.floor(idx / 10);
+      const x = axisWidth + col * colWidth;
+      const y = gridBottom + 20 + row * 24;
+      
+      ctx.fillStyle = rgbToHex(...(stat as { code: string; count: number; rgb: [number, number, number] }).rgb);
+      ctx.fillRect(x, y, 16, 16);
+      ctx.strokeStyle = "#000000";
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(x, y, 16, 16);
+      
+      ctx.fillStyle = "#333333";
+      ctx.font = "11px Arial";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(`${stat.code} x${stat.count}`, x + 20, y + 8);
+    });
     
     const link = document.createElement("a");
     link.download = "perler-bead-pattern.png";

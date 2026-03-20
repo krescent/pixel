@@ -131,6 +131,34 @@ function App() {
                 <p>像素尺寸: <span className="font-medium">{processed.width} x {processed.height}</span></p>
                 <p>使用颜色: <span className="font-medium">{new Set(processed.pixels.flat().map(p => p.color.code)).size}</span></p>
               </div>
+              <div className="mt-4 space-y-1">
+                <h4 className="text-sm font-medium text-gray-700">颜色清单:</h4>
+                <div className="max-h-48 overflow-y-auto space-y-1">
+                  {(() => {
+                    const colorCounts = new Map<string, { count: number; rgb: [number, number, number]; name: string }>();
+                    processed.pixels.flat().forEach(p => {
+                      const code = p.color.code;
+                      if (colorCounts.has(code)) {
+                        colorCounts.get(code)!.count++;
+                      } else {
+                        colorCounts.set(code, { count: 1, rgb: p.color.rgb, name: p.color.name });
+                      }
+                    });
+                    return Array.from(colorCounts.entries())
+                      .sort((a, b) => b[1].count - a[1].count)
+                      .map(([code, { count, rgb }]) => (
+                        <div key={code} className="flex items-center gap-2 text-xs">
+                          <div 
+                            className="w-4 h-4 rounded flex-shrink-0" 
+                            style={{ backgroundColor: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})` }}
+                          />
+                          <span className="font-mono">{code}</span>
+                          <span className="text-gray-500">x{count}</span>
+                        </div>
+                      ));
+                  })()}
+                </div>
+              </div>
             </div>
           )}
 
