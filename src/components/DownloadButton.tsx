@@ -144,13 +144,13 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
       
       const textColor = isLightColor(rgb) ? "#333333" : "#ffffff";
       ctx.fillStyle = textColor;
-      ctx.font = `bold ${swatchSize * 0.5}px Arial`;
+      ctx.font = `bold ${swatchSize * 0.4}px Arial`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(stat.code, x + swatchSize / 2, y + swatchSize / 2);
       
       ctx.fillStyle = "#333333";
-      ctx.font = "11px Arial";
+      ctx.font = `${swatchSize * 0.3}px Arial`;
       ctx.textAlign = "left";
       ctx.textBaseline = "middle";
       ctx.fillText(`x${stat.count}`, x + swatchSize + 4, y + swatchSize / 2);

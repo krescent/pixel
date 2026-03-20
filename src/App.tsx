@@ -147,16 +147,24 @@ function App() {
                     });
                     return Array.from(colorCounts.entries())
                       .sort((a, b) => b[1].count - a[1].count)
-                      .map(([code, { count, rgb }]) => (
-                        <div key={code} className="flex items-center gap-2 text-xs">
-                          <div 
-                            className="w-4 h-4 rounded flex-shrink-0" 
-                            style={{ backgroundColor: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})` }}
-                          />
-                          <span className="font-mono">{code}</span>
-                          <span className="text-gray-500">x{count}</span>
-                        </div>
-                      ));
+                      .map(([code, { count, rgb }]) => {
+                        const isLight = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255 > 0.5;
+                        return (
+                          <div key={code} className="flex items-center gap-1 text-xs">
+                            <div 
+                              className="w-5 h-5 rounded flex-shrink-0 flex items-center justify-center font-bold"
+                              style={{ 
+                                backgroundColor: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`,
+                                color: isLight ? '#333' : '#fff',
+                                fontSize: '7px'
+                              }}
+                            >
+                              {code}
+                            </div>
+                            <span className="text-gray-600 text-xs">x{count}</span>
+                          </div>
+                        );
+                      });
                   })()}
                 </div>
               </div>
