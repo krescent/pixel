@@ -22,7 +22,7 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
     const mouseY = e.clientY - rect.top + container.scrollTop;
 
     const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    const newScale = Math.max(0.5, Math.min(10, scale + delta));
+    const newScale = Math.max(0.5, Math.min(10, scale * (1 + delta)));
     
     const scaleRatio = newScale / scale;
     const newScrollX = mouseX * scaleRatio - (e.clientX - rect.left);
@@ -38,25 +38,38 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    if (!container || pixels.length === 0) return;
 
-    const fitScale = Math.min(
-      container.clientWidth / (displayWidth),
-      container.clientHeight / (displayWidth)
-    );
-    setScale(fitScale);
-    
-    const scrollX = (displayWidth * fitScale - container.clientWidth) / 2;
-    const scrollY = (displayWidth * fitScale - container.clientHeight) / 2;
-    container.scrollLeft = scrollX;
-    container.scrollTop = scrollY;
-  }, [displayWidth]);
+    const updateSize = () => {
+      const rect = container.getBoundingClientRect();
+      
+      const totalSize = displayWidth;
+      const fitScale = Math.min(
+        rect.width / totalSize,
+        rect.height / totalSize
+      );
+      
+      setScale(fitScale);
+      
+      const scrollX = (totalSize * fitScale - rect.width) / 2;
+      const scrollY = (totalSize * fitScale - rect.height) / 2;
+      container.scrollLeft = scrollX;
+      container.scrollTop = scrollY;
+    };
+
+    updateSize();
+
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, [displayWidth, pixels.length]);
 
   if (pixels.length === 0) return null;
 
   const width = pixels[0]?.length ?? 0;
-  const baseSize = displayWidth / width;
-  const displaySize = Math.round(baseSize * scale);
+  const totalSize = displayWidth;
+  const displaySize = totalSize * scale;
 
   return (
     <div 
@@ -64,15 +77,21 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
       className="overflow-auto bg-gray-500 rounded-xl p-4"
       onWheel={handleWheel}
       style={{
-        maxWidth: '100%',
-        maxHeight: '100%',
+        width: '100%',
+        height: '100%',
       }}
     >
-      <div className="inline-block">
+      <div 
+        className="inline-block"
+        style={{
+          width: `${displaySize}px`,
+          height: `${displaySize}px`,
+        }}
+      >
         <div 
-          className="inline-grid border-2 border-gray-600"
+          className="inline-grid border-2 border-gray-600 w-full h-full"
           style={{
-            gridTemplateColumns: `repeat(${width}, ${displaySize}px)`,
+            gridTemplateColumns: `repeat(${width}, 1fr)`,
             gap: '1px',
           }}
         >
@@ -81,17 +100,15 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
             return (
               <div
                 key={index}
-                className="rounded-sm flex items-center justify-center text-[3px] font-bold select-none"
+                className="rounded-sm flex items-center justify-center text-[3px] font-bold select-none aspect-square"
                 style={{
-                  width: `${displaySize}px`,
-                  height: `${displaySize}px`,
                   backgroundColor: rgbToHex(...pixel.rgb),
                   color: textColor,
                   boxShadow: "inset 0 -1px 2px rgba(0,0,0,0.2), inset 0 1px 2px rgba(255,255,255,0.3)",
                 }}
                 title={`${pixel.color.code} - ${pixel.color.name}`}
               >
-                {displaySize >= 8 && pixel.color.code}
+                {displaySize / width >= 8 && pixel.color.code}
               </div>
             );
           })}
