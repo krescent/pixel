@@ -5,31 +5,36 @@ import { rgbToHex } from "../utils/colorMatching";
 
 interface PerlerGridProps {
   pixels: ProcessedPixel[][];
+  displayWidth: number;
 }
 
-export function PerlerGrid({ pixels }: PerlerGridProps) {
+export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
   const [scale, setScale] = useState(1);
 
   const handleWheel = useCallback((e: WheelEvent<HTMLDivElement>) => {
     e.preventDefault();
     const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    setScale(prev => Math.max(0.5, Math.min(3, prev + delta)));
+    setScale(prev => Math.max(0.5, Math.min(5, prev + delta)));
   }, []);
 
   if (pixels.length === 0) return null;
 
   const width = pixels[0]?.length ?? 0;
-  const baseSize = 16;
+  const baseSize = displayWidth / width;
   const displaySize = Math.round(baseSize * scale);
 
   return (
     <div 
-      className="overflow-auto bg-gray-500 rounded-xl p-4 max-w-full max-h-full"
+      className="overflow-auto bg-gray-500 rounded-xl p-4"
       onWheel={handleWheel}
+      style={{
+        maxWidth: '100%',
+        maxHeight: '100%',
+      }}
     >
       <div className="inline-block">
         <div 
-          className="inline-grid"
+          className="inline-grid border-2 border-gray-600"
           style={{
             gridTemplateColumns: `repeat(${width}, ${displaySize}px)`,
             gap: '1px',

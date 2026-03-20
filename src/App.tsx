@@ -95,9 +95,12 @@ function App() {
               <h2 className="text-lg font-semibold text-gray-700">拼豆图样预览</h2>
               {processed && <DownloadButton pixels={processed.pixels} />}
             </div>
-            <div className="flex-1 px-4 pb-4 overflow-auto flex items-center justify-center">
+            <div className="flex-1 px-4 pb-4 flex items-center justify-center">
               {processed ? (
-                <PerlerGrid pixels={processed.pixels} />
+                <PerlerGrid 
+                  pixels={processed.pixels} 
+                  displayWidth={shortEdge}
+                />
               ) : (
                 <div className="w-full h-64 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
                   <p>上传图片后将显示拼豆图样</p>
