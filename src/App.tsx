@@ -14,9 +14,18 @@ function App() {
   const { processImage } = useImageProcessor();
 
   const calculateCrop = useCallback((imgWidth: number, imgHeight: number, targetShort: number) => {
-    const aspectRatio = targetShort / Math.max(imgWidth, imgHeight);
-    const cropWidth = Math.round(imgWidth * aspectRatio);
-    const cropHeight = Math.round(imgHeight * aspectRatio);
+    const imgAspect = imgWidth / imgHeight;
+    
+    let cropWidth: number;
+    let cropHeight: number;
+    
+    if (imgAspect >= 1) {
+      cropHeight = targetShort;
+      cropWidth = Math.round(targetShort * imgAspect);
+    } else {
+      cropWidth = targetShort;
+      cropHeight = Math.round(targetShort / imgAspect);
+    }
     
     return {
       x: Math.round((imgWidth - cropWidth) / 2),
