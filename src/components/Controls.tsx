@@ -3,8 +3,6 @@ interface ControlsProps {
   onShortEdgeChange: (value: number) => void;
   beadSize: number;
   onBeadSizeChange: (value: number) => void;
-  width: number;
-  height: number;
 }
 
 export function Controls({
@@ -12,20 +10,15 @@ export function Controls({
   onShortEdgeChange,
   beadSize,
   onBeadSizeChange,
-  width,
-  height,
 }: ControlsProps) {
-  const actualWidth = width > height ? shortEdge : Math.round(shortEdge * (width / height));
-  const actualHeight = height > width ? shortEdge : Math.round(shortEdge * (height / width));
-  const widthCm = (actualWidth * beadSize / 10).toFixed(1);
-  const heightCm = (actualHeight * beadSize / 10).toFixed(1);
+  const sizeCm = (shortEdge * beadSize / 10).toFixed(1);
 
   return (
     <div className="space-y-6 bg-gray-50 rounded-xl p-6">
       <div>
         <div className="flex justify-between items-center mb-2">
-          <label className="font-medium text-gray-700">短边像素数</label>
-          <span className="text-purple-600 font-bold">{shortEdge}</span>
+          <label className="font-medium text-gray-700">拼豆像素数</label>
+          <span className="text-purple-600 font-bold">{shortEdge} x {shortEdge}</span>
         </div>
         <input
           type="range"
@@ -64,10 +57,7 @@ export function Controls({
 
       <div className="pt-4 border-t border-gray-200">
         <div className="text-sm text-gray-600">
-          <p>成品尺寸: <span className="font-medium">{widthCm}</span> × <span className="font-medium">{heightCm}</span> cm</p>
-          <p className="text-xs text-gray-400 mt-1">
-            像素: {actualWidth} × {actualHeight}
-          </p>
+          <p>成品尺寸: <span className="font-medium">{sizeCm}</span> x <span className="font-medium">{sizeCm}</span> cm</p>
         </div>
       </div>
     </div>

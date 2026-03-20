@@ -13,6 +13,8 @@ function App() {
   const [cropPosition, setCropPosition] = useState({ x: 0, y: 0 });
   const { processImage } = useImageProcessor();
 
+  const imageShortEdge = imageData ? Math.min(imageData.width, imageData.height) : 0;
+
   const handleImageLoad = useCallback((data: ImageData, url: string) => {
     setImageData(data);
     setImageUrl(url);
@@ -32,7 +34,7 @@ function App() {
     
     const { data, width: srcWidth, height: srcHeight } = imageData;
     const { x: cropX, y: cropY } = cropPosition;
-    const cropSize = shortEdge;
+    const cropSize = imageShortEdge;
     
     if (cropX + cropSize > srcWidth || cropY + cropSize > srcHeight) {
       return null;
@@ -59,7 +61,7 @@ function App() {
     }
     
     return imageDataCropped;
-  }, [imageData, cropPosition, shortEdge]);
+  }, [imageData, cropPosition, imageShortEdge]);
 
   const processed = croppedImageData ? processImage(croppedImageData, shortEdge) : null;
 
@@ -79,7 +81,7 @@ function App() {
                 imageUrl={imageUrl}
                 imageWidth={imageData?.width ?? 0}
                 imageHeight={imageData?.height ?? 0}
-                cropSize={shortEdge}
+                cropSize={imageShortEdge}
                 onCropPositionChange={handleCropPositionChange}
                 cropPosition={cropPosition}
               />
@@ -113,8 +115,6 @@ function App() {
             onShortEdgeChange={handleShortEdgeChange}
             beadSize={beadSize}
             onBeadSizeChange={setBeadSize}
-            width={shortEdge}
-            height={shortEdge}
           />
 
           {processed && (
