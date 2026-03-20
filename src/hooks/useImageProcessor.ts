@@ -41,7 +41,6 @@ export function useImageProcessor() {
         const startY = Math.floor(srcYStart);
         const endY = Math.ceil(srcYEnd);
         
-        const totalArea = (srcXEnd - srcXStart) * (srcYEnd - srcYStart);
         const colorWeights: Map<string, { color: PerlerColor; weight: number; r: number; g: number; b: number }> = new Map();
         
         for (let sy = startY; sy < endY && sy < srcHeight; sy++) {
@@ -82,26 +81,19 @@ export function useImageProcessor() {
           rgb = [255, 255, 255];
           transparent = true;
         } else {
-          let totalWeight = 0;
-          let maxEntry = { weight: 0, color: WHITE_COLOR, r: 255, g: 255, b: 255 };
+          let maxEntry: { color: PerlerColor; weight: number; r: number; g: number; b: number } | null = null;
           for (const entry of colorWeights.values()) {
-            totalWeight += entry.weight;
-            const luminance = 0.299 * entry.r + 0.587 * entry.g + 0.114 * entry.b;
-            const maxLuminance = 0.299 * maxEntry.r + 0.587 * maxEntry.g + 0.114 * maxEntry.b;
-            if (entry.weight > maxEntry.weight || 
-                (entry.weight === maxEntry.weight && luminance < maxLuminance)) {
+            if (!maxEntry || 
+                entry.weight > maxEntry.weight || 
+                (entry.weight === maxEntry.weight && 
+                 (0.299 * entry.r + 0.587 * entry.g + 0.114 * entry.b) < 
+                 (0.299 * maxEntry.r + 0.587 * maxEntry.g + 0.114 * maxEntry.b))) {
               maxEntry = entry;
             }
           }
           
-          if (totalWeight < totalArea * 0.5) {
-            color = WHITE_COLOR;
-            rgb = [255, 255, 255];
-            transparent = true;
-          } else {
-            color = maxEntry.color;
-            rgb = [maxEntry.r, maxEntry.g, maxEntry.b];
-          }
+          color = maxEntry!.color;
+          rgb = [maxEntry!.r, maxEntry!.g, maxEntry!.b];
         }
         
         row.push({ color, rgb, transparent });
