@@ -122,7 +122,8 @@ function App() {
               <h3 className="font-medium text-gray-700 mb-3">图样统计</h3>
               <div className="space-y-2 text-sm text-gray-600">
                 <p>像素尺寸: <span className="font-medium">{processed.width} x {processed.height}</span></p>
-                <p>使用颜色: <span className="font-medium">{new Set(processed.pixels.flat().map(p => p.color.code)).size}</span></p>
+                <p>使用颜色: <span className="font-medium">{new Set(processed.pixels.flat().filter(p => p.color).map(p => p.color!.code)).size}</span></p>
+                <p>透明像素: <span className="font-medium">{processed.pixels.flat().filter(p => p.transparent).length}</span></p>
               </div>
             </div>
           )}

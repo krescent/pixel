@@ -5,7 +5,13 @@ const WEIGHT_R = 0.3;
 const WEIGHT_G = 0.59;
 const WEIGHT_B = 0.11;
 
-export function findClosestPerlerColor(r: number, g: number, b: number): PerlerColor {
+const TRANSPARENT_THRESHOLD = 10;
+
+export function findClosestPerlerColor(r: number, g: number, b: number, a: number = 255): PerlerColor | null {
+  if (a < TRANSPARENT_THRESHOLD) {
+    return null;
+  }
+  
   let closestColor = PERLER_COLORS[0];
   let minDistance = Infinity;
 
