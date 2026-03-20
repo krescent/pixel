@@ -176,7 +176,7 @@ export function ImageUploader({
         </div>
         
         <div className="mt-4 flex justify-center">
-          <label className="cursor-pointer px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+          <label className="w-full px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 cursor-pointer">
             <input
               type="file"
               accept="image/*"
@@ -184,6 +184,7 @@ export function ImageUploader({
               className="hidden"
               id="image-upload"
             />
+            <span>📁</span>
             更换图片
           </label>
         </div>

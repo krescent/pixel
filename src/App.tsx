@@ -72,10 +72,10 @@ function App() {
       </header>
 
       <div className="flex h-[calc(100vh-73px)]">
-        <div className="flex-1 p-6 overflow-auto">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 h-full flex flex-col">
-            <h2 className="text-lg font-semibold text-gray-700 px-4 pt-4 mb-4">原图预览</h2>
-            <div className="flex-1 px-4 pb-4 overflow-auto">
+        <div className="flex-1 p-4 flex flex-col gap-4">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex-1 flex flex-col p-4">
+            <h2 className="text-lg font-semibold text-gray-700 mb-4">原图预览</h2>
+            <div className="flex-1 min-h-0">
               <ImageUploader
                 onImageLoad={handleImageLoad}
                 imageUrl={imageUrl}
@@ -89,10 +89,10 @@ function App() {
           </div>
         </div>
 
-        <div className="flex-1 p-6 overflow-auto">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 h-full flex flex-col">
-            <h2 className="text-lg font-semibold text-gray-700 px-4 pt-4 mb-4">拼豆图样预览</h2>
-            <div className="flex-1 px-4 pb-4 flex flex-col">
+        <div className="flex-1 p-4 flex flex-col gap-4">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex-1 flex flex-col p-4">
+            <h2 className="text-lg font-semibold text-gray-700 mb-4">拼豆图样预览</h2>
+            <div className="flex-1 min-h-0 flex flex-col">
               <div className="flex-1 flex items-center justify-center">
                 {processed ? (
                   <PerlerGrid 
@@ -106,7 +106,7 @@ function App() {
                 )}
               </div>
               {processed && (
-                <div className="mt-4 flex justify-center">
+                <div className="mt-4">
                   <DownloadButton pixels={processed.pixels} />
                 </div>
               )}
@@ -114,7 +114,7 @@ function App() {
           </div>
         </div>
 
-        <div className="w-80 border-l border-gray-200 bg-white p-6 overflow-auto">
+        <div className="w-80 border-l border-gray-200 bg-white p-4 overflow-auto">
           <h2 className="text-lg font-semibold text-gray-700 mb-6">设置</h2>
           
           <Controls

@@ -68,7 +68,7 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
     <button
       onClick={downloadImage}
       disabled={pixels.length === 0 || isGenerating}
-      className="px-6 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+      className="w-full px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
     >
       <span>⬇️</span>
       {isGenerating ? "生成中..." : "下载 PNG"}
