@@ -10,35 +10,58 @@ interface PerlerGridProps {
 
 export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
   const scaleRef = useRef(1);
+  const [scale, setScale] = useState(1);
+
+  const fitToContainer = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+
+    const fitScale = Math.min(
+      rect.width / displayWidth,
+      rect.height / displayWidth
+    );
+
+    scaleRef.current = fitScale;
+    setScale(fitScale);
+
+    const scrollX = (displayWidth * fitScale - rect.width) / 2;
+    const scrollY = (displayWidth * fitScale - rect.height) / 2;
+    container.scrollLeft = scrollX;
+    container.scrollTop = scrollY;
+  }, [displayWidth]);
+
+  const handleDoubleClick = useCallback(() => {
+    fitToContainer();
+  }, [fitToContainer]);
 
   const handleWheel = useCallback((e: WheelEvent<HTMLDivElement>) => {
     e.preventDefault();
     const container = containerRef.current;
     if (!container) return;
 
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    const newScale = Math.max(0.5, Math.min(10, scaleRef.current * delta));
-    
     const rect = container.getBoundingClientRect();
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    
-    const currentScrollX = container.scrollLeft;
-    const currentScrollY = container.scrollTop;
-    const currentCenterX = currentScrollX + centerX;
-    const currentCenterY = currentScrollY + centerY;
-    
-    const newCenterX = currentCenterX * (newScale / scaleRef.current);
-    const newCenterY = currentCenterY * (newScale / scaleRef.current);
-    
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    let newScale = scaleRef.current * delta;
+    newScale = Math.max(0.5, Math.min(10, newScale));
+
+    const mouseRatioX = mouseX / (displayWidth * scaleRef.current);
+    const mouseRatioY = mouseY / (displayWidth * scaleRef.current);
+
     scaleRef.current = newScale;
     setScale(newScale);
-    
+
     requestAnimationFrame(() => {
-      container.scrollLeft = newCenterX - centerX;
-      container.scrollTop = newCenterY - centerY;
+      const newMouseX = mouseRatioX * displayWidth * newScale;
+      const newMouseY = mouseRatioY * displayWidth * newScale;
+      container.scrollLeft = newMouseX - mouseX;
+      container.scrollTop = newMouseY - mouseY;
     });
   }, [displayWidth]);
 
@@ -46,31 +69,16 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
     const container = containerRef.current;
     if (!container || pixels.length === 0) return;
 
-    const updateSize = () => {
-      const rect = container.getBoundingClientRect();
-      if (rect.width === 0 || rect.height === 0) return;
-      
-      const fitScale = Math.min(
-        rect.width / displayWidth,
-        rect.height / displayWidth
-      );
-      
-      scaleRef.current = fitScale;
-      setScale(fitScale);
-      
-      const scrollX = (displayWidth * fitScale - rect.width) / 2;
-      const scrollY = (displayWidth * fitScale - rect.height) / 2;
-      container.scrollLeft = scrollX;
-      container.scrollTop = scrollY;
-    };
+    const timeoutId = setTimeout(fitToContainer, 0);
 
-    updateSize();
-
-    const observer = new ResizeObserver(updateSize);
+    const observer = new ResizeObserver(fitToContainer);
     observer.observe(container);
 
-    return () => observer.disconnect();
-  }, [displayWidth, pixels.length]);
+    return () => {
+      clearTimeout(timeoutId);
+      observer.disconnect();
+    };
+  }, [displayWidth, pixels.length, fitToContainer]);
 
   if (pixels.length === 0) return null;
 
@@ -83,6 +91,7 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
       ref={containerRef}
       className="overflow-auto bg-gray-500 rounded-xl p-4"
       onWheel={handleWheel}
+      onDoubleClick={handleDoubleClick}
       style={{
         width: '100%',
         height: '100%',
