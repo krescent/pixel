@@ -41,40 +41,42 @@ export function useImageProcessor() {
         const startY = Math.floor(srcYStart);
         const endY = Math.ceil(srcYEnd);
         
-        let totalR = 0, totalG = 0, totalB = 0, count = 0;
-        let transparentCount = 0;
-        const totalPixels = (endX - startX) * (endY - startY);
+        const totalArea = (srcXEnd - srcXStart) * (srcYEnd - srcYStart);
+        let totalR = 0, totalG = 0, totalB = 0, totalWeight = 0;
         
         for (let sy = startY; sy < endY && sy < srcHeight; sy++) {
           for (let sx = startX; sx < endX && sx < srcWidth; sx++) {
             const srcIndex = (sy * srcWidth + sx) * 4;
             const a = data[srcIndex + 3];
             
-            if (a < 128) {
-              transparentCount++;
-              continue;
-            }
+            const overlapLeft = Math.max(srcXStart, sx);
+            const overlapRight = Math.min(srcXEnd, sx + 1);
+            const overlapTop = Math.max(srcYStart, sy);
+            const overlapBottom = Math.min(srcYEnd, sy + 1);
             
-            totalR += data[srcIndex];
-            totalG += data[srcIndex + 1];
-            totalB += data[srcIndex + 2];
-            count++;
+            const weight = (overlapRight - overlapLeft) * (overlapBottom - overlapTop);
+            
+            if (a < 128) continue;
+            
+            totalR += data[srcIndex] * weight;
+            totalG += data[srcIndex + 1] * weight;
+            totalB += data[srcIndex + 2] * weight;
+            totalWeight += weight;
           }
         }
         
         let color: PerlerColor;
         let rgb: [number, number, number];
-        
         let transparent = false;
         
-        if (transparentCount > totalPixels * 0.5 || count === 0) {
+        if (totalWeight === 0 || totalWeight < totalArea * 0.5) {
           color = WHITE_COLOR;
           rgb = [255, 255, 255];
           transparent = true;
         } else {
-          const avgR = Math.round(totalR / count);
-          const avgG = Math.round(totalG / count);
-          const avgB = Math.round(totalB / count);
+          const avgR = Math.round(totalR / totalWeight);
+          const avgG = Math.round(totalG / totalWeight);
+          const avgB = Math.round(totalB / totalWeight);
           color = findClosestPerlerColor(avgR, avgG, avgB);
           rgb = [avgR, avgG, avgB];
         }
