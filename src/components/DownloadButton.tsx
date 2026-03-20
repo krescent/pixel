@@ -16,12 +16,12 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
     
     const height = pixels.length;
     const width = pixels[0]?.length ?? 0;
-    const cellSize = 60;
-    const gap = 4;
+    const cellSize = 40;
+    const axisWidth = 40;
     
     const canvas = document.createElement("canvas");
-    canvas.width = width * (cellSize + gap);
-    canvas.height = height * (cellSize + gap);
+    canvas.width = width * cellSize + axisWidth * 2;
+    canvas.height = height * cellSize + axisWidth * 2;
     const ctx = canvas.getContext("2d");
     
     if (!ctx) {
@@ -29,32 +29,83 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
       return;
     }
     
-    ctx.fillStyle = "#888888";
+    ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.strokeStyle = "#ddd";
+    ctx.lineWidth = 0.5;
+    for (let x = 0; x <= width; x++) {
+      ctx.beginPath();
+      ctx.moveTo(x * cellSize + axisWidth, axisWidth);
+      ctx.lineTo(x * cellSize + axisWidth, height * cellSize + axisWidth);
+      ctx.stroke();
+    }
+    for (let y = 0; y <= height; y++) {
+      ctx.beginPath();
+      ctx.moveTo(axisWidth, y * cellSize + axisWidth);
+      ctx.lineTo(width * cellSize + axisWidth, y * cellSize + axisWidth);
+      ctx.stroke();
+    }
+    
+    ctx.strokeStyle = "#ff4444";
+    ctx.lineWidth = 2;
+    for (let x = 0; x <= width; x += 5) {
+      ctx.beginPath();
+      ctx.moveTo(x * cellSize + axisWidth, axisWidth);
+      ctx.lineTo(x * cellSize + axisWidth, height * cellSize + axisWidth);
+      ctx.stroke();
+    }
+    for (let y = 0; y <= height; y += 5) {
+      ctx.beginPath();
+      ctx.moveTo(axisWidth, y * cellSize + axisWidth);
+      ctx.lineTo(width * cellSize + axisWidth, y * cellSize + axisWidth);
+      ctx.stroke();
+    }
     
     pixels.forEach((row, y) => {
       row.forEach((pixel, x) => {
-        const px = x * (cellSize + gap);
-        const py = y * (cellSize + gap);
+        if (pixel.transparent) return;
         
-        ctx.beginPath();
-        ctx.arc(px + cellSize / 2, py + cellSize / 2, cellSize / 2 - 2, 0, Math.PI * 2);
+        const px = x * cellSize + axisWidth;
+        const py = y * cellSize + axisWidth;
+        
         ctx.fillStyle = rgbToHex(...pixel.rgb);
-        ctx.fill();
-        
-        ctx.beginPath();
-        ctx.arc(px + cellSize / 2 - 6, py + cellSize / 2 - 6, cellSize / 8, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(255,255,255,0.3)";
-        ctx.fill();
+        ctx.fillRect(px, py, cellSize, cellSize);
         
         const textColor = isLightColor(pixel.rgb) ? "#333333" : "#ffffff";
         ctx.fillStyle = textColor;
-        ctx.font = `bold ${cellSize * 0.45}px Arial`;
+        ctx.font = `bold ${cellSize * 0.4}px Arial`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(pixel.color.code, px + cellSize / 2, py + cellSize / 2);
       });
     });
+    
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(axisWidth, axisWidth, width * cellSize, height * cellSize);
+    
+    const renderLabel = (i: number, posX: number, posY: number, isMajor: boolean) => {
+      ctx.font = isMajor ? "bold 12px Arial" : "10px Arial";
+      ctx.fillStyle = isMajor ? "#ff4444" : "#666666";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(String(i + 1), posX, posY);
+    };
+    
+    for (let i = 0; i < width; i++) {
+      const isMajor = (i + 1) % 5 === 0;
+      const x = axisWidth + i * cellSize + cellSize / 2;
+      renderLabel(i, x, axisWidth / 2, isMajor);
+      renderLabel(i, x, axisWidth + height * cellSize + axisWidth / 2, isMajor);
+    }
+    
+    for (let i = 0; i < height; i++) {
+      const isMajor = (i + 1) % 5 === 0;
+      const y = axisWidth + i * cellSize + cellSize / 2;
+      renderLabel(i, axisWidth / 2, y, isMajor);
+      renderLabel(i, axisWidth + width * cellSize + axisWidth / 2, y, isMajor);
+    }
     
     const link = document.createElement("a");
     link.download = "perler-bead-pattern.png";

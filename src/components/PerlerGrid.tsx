@@ -19,7 +19,7 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
       const rect = container.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) return;
 
-      const padding = 32;
+      const padding = 48;
       const availableWidth = rect.width - padding;
       const availableHeight = rect.height - padding;
       
@@ -29,7 +29,7 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
       
       setDimensions({
         cellSize,
-        gridSize: displayWidth * cellSize + (displayWidth - 1)
+        gridSize: displayWidth * cellSize
       });
     };
 
@@ -43,47 +43,153 @@ export function PerlerGrid({ pixels, displayWidth }: PerlerGridProps) {
   if (pixels.length === 0) return null;
 
   const width = pixels[0]?.length ?? 0;
-  const showCode = dimensions.cellSize >= 10;
+  const { cellSize, gridSize } = dimensions;
+  const axisWidth = 24;
+  const showCode = cellSize >= 10;
+  const totalWidth = gridSize + axisWidth * 2;
+  const totalHeight = gridSize + axisWidth * 2;
+
+  const renderAxisLabels = () => {
+    const labels = [];
+    
+    for (let i = 0; i < displayWidth; i++) {
+      const isMajor = (i + 1) % 5 === 0;
+      const fontSize = isMajor ? 10 : 8;
+      const color = isMajor ? "#ff4444" : "#666";
+      const fontWeight = isMajor ? "bold" : "normal";
+      
+      const xPos = axisWidth + i * cellSize + cellSize / 2;
+      
+      labels.push(
+        <text
+          key={`top-${i}`}
+          x={xPos}
+          y={axisWidth / 2}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize={fontSize}
+          fontWeight={fontWeight}
+          fill={color}
+        >
+          {i + 1}
+        </text>
+      );
+      
+      labels.push(
+        <text
+          key={`bottom-${i}`}
+          x={xPos}
+          y={axisWidth + gridSize + axisWidth / 2}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize={fontSize}
+          fontWeight={fontWeight}
+          fill={color}
+        >
+          {i + 1}
+        </text>
+      );
+      
+      const yPos = axisWidth + i * cellSize + cellSize / 2;
+      
+      labels.push(
+        <text
+          key={`left-${i}`}
+          x={axisWidth / 2}
+          y={yPos}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize={fontSize}
+          fontWeight={fontWeight}
+          fill={color}
+        >
+          {i + 1}
+        </text>
+      );
+      
+      labels.push(
+        <text
+          key={`right-${i}`}
+          x={axisWidth + gridSize + axisWidth / 2}
+          y={yPos}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize={fontSize}
+          fontWeight={fontWeight}
+          fill={color}
+        >
+          {i + 1}
+        </text>
+      );
+    }
+    return labels;
+  };
 
   return (
     <div 
       ref={containerRef}
-      className="flex items-center justify-center bg-gray-500 rounded-xl p-4 w-full h-full overflow-hidden"
+      className="flex items-center justify-center bg-white w-full h-full overflow-auto"
     >
-      <div 
-        style={{
-          width: `${dimensions.gridSize}px`,
-          height: `${dimensions.gridSize}px`,
-          flexShrink: 0,
-        }}
+      <svg
+        width={totalWidth}
+        height={totalHeight}
+        style={{ flexShrink: 0 }}
       >
-        <div 
-          className="grid w-full h-full"
-          style={{
-            gridTemplateColumns: `repeat(${width}, 1fr)`,
-            gap: '1px',
-          }}
-        >
+        <defs>
+          <pattern id="grid" width={cellSize} height={cellSize} patternUnits="userSpaceOnUse">
+            <line x1="0" y1="0" x2={cellSize} y2="0" stroke="#ddd" strokeWidth="0.5" />
+            <line x1="0" y1="0" x2="0" y2={cellSize} stroke="#ddd" strokeWidth="0.5" />
+          </pattern>
+          <pattern id="gridMajor" width={cellSize * 5} height={cellSize * 5} patternUnits="userSpaceOnUse">
+            <rect width={cellSize * 5} height={cellSize * 5} fill="url(#grid)" />
+            <line x1="0" y1="0" x2={cellSize * 5} y2="0" stroke="#ff4444" strokeWidth="2" />
+            <line x1="0" y1="0" x2="0" y2={cellSize * 5} stroke="#ff4444" strokeWidth="2" />
+          </pattern>
+        </defs>
+        
+        <g transform={`translate(${axisWidth}, ${axisWidth})`}>
+          <rect x="0" y="0" width={gridSize} height={gridSize} fill="url(#gridMajor)" />
+          
           {pixels.flat().map((pixel, index) => {
+            const x = index % width;
+            const y = Math.floor(index / width);
+            const px = x * cellSize;
+            const py = y * cellSize;
             const textColor = isLightColor(pixel.rgb) ? '#333' : '#fff';
+            
             return (
-              <div
-                key={index}
-                className="rounded-full flex items-center justify-center font-bold select-none aspect-square"
-                style={{
-                  backgroundColor: rgbToHex(...pixel.rgb),
-                  color: textColor,
-                  fontSize: `${Math.max(4, dimensions.cellSize * 0.35)}px`,
-                  boxShadow: "inset 0 -2px 4px rgba(0,0,0,0.2), inset 0 2px 4px rgba(255,255,255,0.3)",
-                }}
-                title={`${pixel.color.code} - ${pixel.color.name}`}
-              >
-                {showCode && pixel.color.code}
-              </div>
+              <g key={index}>
+                {!pixel.transparent && (
+                  <rect
+                    x={px}
+                    y={py}
+                    width={cellSize}
+                    height={cellSize}
+                    fill={rgbToHex(...pixel.rgb)}
+                  />
+                )}
+                {showCode && !pixel.transparent && (
+                  <text
+                    x={px + cellSize / 2}
+                    y={py + cellSize / 2}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fontSize={cellSize * 0.35}
+                    fontWeight="bold"
+                    fill={textColor}
+                  >
+                    {pixel.color.code}
+                  </text>
+                )}
+              </g>
             );
           })}
-        </div>
-      </div>
+          
+          <rect x="0" y="0" width={gridSize} height={gridSize} fill="none" stroke="#000" strokeWidth="2" />
+        </g>
+        
+        {renderAxisLabels()}
+      </svg>
     </div>
   );
 }

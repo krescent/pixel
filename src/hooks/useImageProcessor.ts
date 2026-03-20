@@ -8,6 +8,7 @@ const WHITE_COLOR = PERLER_COLORS.find((c: PerlerColor) => c.code === "H1")!;
 export interface ProcessedPixel {
   color: PerlerColor;
   rgb: [number, number, number];
+  transparent: boolean;
 }
 
 export function useImageProcessor() {
@@ -64,9 +65,12 @@ export function useImageProcessor() {
         let color: PerlerColor;
         let rgb: [number, number, number];
         
+        let transparent = false;
+        
         if (transparentCount > totalPixels * 0.5 || count === 0) {
           color = WHITE_COLOR;
           rgb = [255, 255, 255];
+          transparent = true;
         } else {
           const avgR = Math.round(totalR / count);
           const avgG = Math.round(totalG / count);
@@ -75,7 +79,7 @@ export function useImageProcessor() {
           rgb = [avgR, avgG, avgB];
         }
         
-        row.push({ color, rgb });
+        row.push({ color, rgb, transparent });
       }
       pixels.push(row);
     }
