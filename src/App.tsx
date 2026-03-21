@@ -13,6 +13,7 @@ function App() {
   const [beadSize, setBeadSize] = useState(3);
   const [cropPosition, setCropPosition] = useState({ x: 0, y: 0 });
   const [colorBrand, setColorBrand] = useState("MARD 221色");
+  const [fillWhite, setFillWhite] = useState(true);
   const { processImage } = useImageProcessor();
 
   const imageShortEdge = imageData ? Math.min(imageData.width, imageData.height) : 0;
@@ -65,7 +66,7 @@ function App() {
     return imageDataCropped;
   }, [imageData, cropPosition, imageShortEdge]);
 
-  const processed = croppedImageData ? processImage(croppedImageData, shortEdge, colorBrand) : null;
+  const processed = croppedImageData ? processImage(croppedImageData, shortEdge, colorBrand, fillWhite) : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
@@ -109,7 +110,7 @@ function App() {
               </div>
               {processed && (
                 <div className="mt-4">
-                  <DownloadButton pixels={processed.pixels} />
+                  <DownloadButton pixels={processed.pixels} fillWhite={fillWhite} />
                 </div>
               )}
             </div>
@@ -126,6 +127,8 @@ function App() {
             onBeadSizeChange={setBeadSize}
             colorBrand={colorBrand}
             onColorBrandChange={setColorBrand}
+            fillWhite={fillWhite}
+            onFillWhiteChange={setFillWhite}
           />
 
           {processed && (
@@ -133,7 +136,17 @@ function App() {
               <h3 className="font-medium text-gray-700 mb-3">图样统计</h3>
               <div className="space-y-2 text-sm text-gray-600">
                 <p>像素尺寸: <span className="font-medium">{processed.width} x {processed.height}</span></p>
-                <p>使用颜色: <span className="font-medium">{new Set(processed.pixels.flat().map(p => p.color.code)).size}</span></p>
+                {(() => {
+                  const total = processed.pixels.flat().length;
+                  const transparentCount = processed.pixels.flat().filter(p => p.transparent).length;
+                  const colorCount = new Set(processed.pixels.flat().filter(p => !p.transparent).map(p => p.color.code)).size;
+                  return (
+                    <>
+                      <p>拼豆总数: <span className="font-medium">{total - transparentCount}</span> {transparentCount > 0 && <span className="text-gray-400">(不含透明: {total})</span>}</p>
+                      <p>使用颜色: <span className="font-medium">{colorCount}</span></p>
+                    </>
+                  );
+                })()}
               </div>
               <div className="mt-4 space-y-1">
                 <h4 className="text-sm font-medium text-gray-700">颜色清单:</h4>

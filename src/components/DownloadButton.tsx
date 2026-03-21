@@ -4,9 +4,10 @@ import { rgbToHex } from "../utils/colorMatching";
 
 interface DownloadButtonProps {
   pixels: ProcessedPixel[][];
+  fillWhite: boolean;
 }
 
-export function DownloadButton({ pixels }: DownloadButtonProps) {
+export function DownloadButton({ pixels, fillWhite }: DownloadButtonProps) {
   const [isGenerating, setIsGenerating] = useState(false);
 
   const downloadImage = useCallback(async (mirrored: boolean = false) => {
@@ -48,7 +49,9 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
     
     pixels.forEach((row, y) => {
       row.forEach((pixel, x) => {
-        if (pixel.transparent) return;
+        if (pixel.transparent) {
+          if (!fillWhite) return;
+        }
         
         const drawX = mirrored ? width - 1 - x : x;
         const px = drawX * cellSize + axisWidth;
@@ -249,7 +252,7 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
     }
     
     setIsGenerating(false);
-  }, [pixels]);
+  }, [pixels, fillWhite]);
 
   return (
     <div className="flex gap-2">

@@ -7,6 +7,8 @@ interface ControlsProps {
   onBeadSizeChange: (value: number) => void;
   colorBrand: string;
   onColorBrandChange: (value: string) => void;
+  fillWhite: boolean;
+  onFillWhiteChange: (value: boolean) => void;
 }
 
 export function Controls({
@@ -16,6 +18,8 @@ export function Controls({
   onBeadSizeChange,
   colorBrand,
   onColorBrandChange,
+  fillWhite,
+  onFillWhiteChange,
 }: ControlsProps) {
   const sizeCm = (shortEdge * beadSize / 10).toFixed(1);
 
@@ -76,6 +80,32 @@ export function Controls({
             </option>
           ))}
         </select>
+      </div>
+
+      <div>
+        <label className="font-medium text-gray-700 mb-2 block">背景处理</label>
+        <div className="flex gap-2">
+          <button
+            onClick={() => onFillWhiteChange(false)}
+            className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              !fillWhite
+                ? "bg-purple-600 text-white"
+                : "bg-white text-gray-700 border border-gray-300 hover:border-purple-400"
+            }`}
+          >
+            保留透明
+          </button>
+          <button
+            onClick={() => onFillWhiteChange(true)}
+            className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              fillWhite
+                ? "bg-purple-600 text-white"
+                : "bg-white text-gray-700 border border-gray-300 hover:border-purple-400"
+            }`}
+          >
+            填充白色
+          </button>
+        </div>
       </div>
 
       <div className="pt-3 border-t border-gray-200">

@@ -15,7 +15,8 @@ export function useImageProcessor() {
   const processImage = useCallback((
     imageData: ImageData,
     targetShortEdge: number,
-    brandName?: string
+    brandName?: string,
+    fillWhite?: boolean
   ): { pixels: ProcessedPixel[][]; width: number; height: number } => {
     const colors = brandName 
       ? COLOR_BRANDS.find(b => b.name === brandName)?.colors ?? PERLER_COLORS
@@ -103,9 +104,15 @@ export function useImageProcessor() {
         let transparent = false;
         
         if (colorWeights.length === 0) {
-          color = WHITE_COLOR;
-          rgb = [255, 255, 255];
-          transparent = true;
+          if (fillWhite) {
+            color = WHITE_COLOR;
+            rgb = [255, 255, 255];
+            transparent = false;
+          } else {
+            color = WHITE_COLOR;
+            rgb = [255, 255, 255];
+            transparent = true;
+          }
         } else {
           let maxEntry = colorWeights[0];
           let maxLuminance = 0.299 * maxEntry.r + 0.587 * maxEntry.g + 0.114 * maxEntry.b;
