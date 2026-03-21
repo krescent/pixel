@@ -9,7 +9,7 @@ interface DownloadButtonProps {
 export function DownloadButton({ pixels }: DownloadButtonProps) {
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const downloadImage = useCallback((mirrored: boolean = false) => {
+  const downloadImage = useCallback(async (mirrored: boolean = false) => {
     if (pixels.length === 0) return;
     
     setIsGenerating(true);
@@ -157,10 +157,94 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
       ctx.fillText(`x${stat.count}`, x + swatchSize + 4, y + swatchSize / 2);
     });
     
-    const link = document.createElement("a");
-    link.download = mirrored ? "perler-bead-pattern-mirrored.png" : "perler-bead-pattern.png";
-    link.href = canvas.toDataURL("image/png");
-    link.click();
+    const dataUrl = canvas.toDataURL("image/png");
+    
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isFirefox = /Firefox/i.test(navigator.userAgent);
+    const filename = mirrored ? "perler-bead-pattern-mirrored.png" : "perler-bead-pattern.png";
+    
+    if (isMobile) {
+      if (isFirefox) {
+        const newWindow = window.open("", "_blank");
+        if (newWindow) {
+          newWindow.document.write(`<img src="${dataUrl}" style="max-width:100%;height:auto;">`);
+        }
+      } else if (isIOS) {
+        try {
+          const response = await fetch(dataUrl);
+          const blob = await response.blob();
+          const file = new File([blob], filename, { type: "image/png" });
+          
+          if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: "拼豆图样",
+            });
+            setIsGenerating(false);
+            return;
+          }
+        } catch {
+        }
+        
+        const link = document.createElement("a");
+        link.href = dataUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else if (navigator.share && !isFirefox) {
+        try {
+          const response = await fetch(dataUrl);
+          const blob = await response.blob();
+          const file = new File([blob], filename, { type: "image/png" });
+          
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: "拼豆图样",
+            });
+            setIsGenerating(false);
+            return;
+          }
+        } catch {
+        }
+        
+        const response = await fetch(dataUrl);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      } else {
+        const response = await fetch(dataUrl);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        
+        if (isFirefox) {
+          window.open(blobUrl, "_blank");
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+        } else {
+          const link = document.createElement("a");
+          link.href = blobUrl;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+        }
+      }
+    } else {
+      const link = document.createElement("a");
+      link.download = filename;
+      link.href = dataUrl;
+      link.click();
+    }
     
     setIsGenerating(false);
   }, [pixels]);
