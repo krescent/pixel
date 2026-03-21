@@ -220,12 +220,11 @@ function App() {
               <div className="flex-1 min-w-[300px] bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                 <h2 className="text-lg font-semibold text-gray-700 mb-3">📖 使用说明</h2>
                 <ul className="text-sm text-gray-500 space-y-2">
-                  <li>1. 上传图片</li>
+                  <li>1. 在左侧上传图片</li>
                   <li>2. 拖动蓝色取景框调整区域</li>
                   <li>3. 调整滑轨控制像素数</li>
-                  <li>4. 选择拼豆尺寸和颜色品牌</li>
-                  <li>5. 选择透明/填充模式</li>
-                  <li>6. 下载保存图样</li>
+                  <li>4. 选择拼豆尺寸</li>
+                  <li>5. 点击下载保存图样</li>
                 </ul>
               </div>
             </div>
