@@ -5,12 +5,14 @@ import { Controls } from "./components/Controls";
 import { DownloadButton } from "./components/DownloadButton";
 import { useImageProcessor } from "./hooks/useImageProcessor";
 
+
 function App() {
   const [imageData, setImageData] = useState<ImageData | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [shortEdge, setShortEdge] = useState(50);
   const [beadSize, setBeadSize] = useState(3);
   const [cropPosition, setCropPosition] = useState({ x: 0, y: 0 });
+  const [colorBrand, setColorBrand] = useState("MARD 221色");
   const { processImage } = useImageProcessor();
 
   const imageShortEdge = imageData ? Math.min(imageData.width, imageData.height) : 0;
@@ -63,7 +65,7 @@ function App() {
     return imageDataCropped;
   }, [imageData, cropPosition, imageShortEdge]);
 
-  const processed = croppedImageData ? processImage(croppedImageData, shortEdge) : null;
+  const processed = croppedImageData ? processImage(croppedImageData, shortEdge, colorBrand) : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
@@ -122,6 +124,8 @@ function App() {
             onShortEdgeChange={handleShortEdgeChange}
             beadSize={beadSize}
             onBeadSizeChange={setBeadSize}
+            colorBrand={colorBrand}
+            onColorBrandChange={setColorBrand}
           />
 
           {processed && (

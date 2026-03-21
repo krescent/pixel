@@ -1,8 +1,12 @@
+import { COLOR_BRANDS } from "../utils/perlerColors";
+
 interface ControlsProps {
   shortEdge: number;
   onShortEdgeChange: (value: number) => void;
   beadSize: number;
   onBeadSizeChange: (value: number) => void;
+  colorBrand: string;
+  onColorBrandChange: (value: string) => void;
 }
 
 export function Controls({
@@ -10,6 +14,8 @@ export function Controls({
   onShortEdgeChange,
   beadSize,
   onBeadSizeChange,
+  colorBrand,
+  onColorBrandChange,
 }: ControlsProps) {
   const sizeCm = (shortEdge * beadSize / 10).toFixed(1);
 
@@ -53,6 +59,23 @@ export function Controls({
             ))}
           </div>
         </div>
+      </div>
+
+      <div>
+        <div className="flex justify-between items-center mb-2">
+          <label className="font-medium text-gray-700">色系品牌</label>
+        </div>
+        <select
+          value={colorBrand}
+          onChange={(e) => onColorBrandChange(e.target.value)}
+          className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:border-purple-500"
+        >
+          {COLOR_BRANDS.map((brand) => (
+            <option key={brand.name} value={brand.name}>
+              {brand.name} ({brand.colors.length}色)
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="pt-3 border-t border-gray-200">

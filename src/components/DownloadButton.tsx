@@ -185,6 +185,7 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
             return;
           }
         } catch {
+          // 静默处理分享失败
         }
         
         const link = document.createElement("a");
@@ -208,6 +209,7 @@ export function DownloadButton({ pixels }: DownloadButtonProps) {
             return;
           }
         } catch {
+          // 静默处理分享失败
         }
         
         const response = await fetch(dataUrl);

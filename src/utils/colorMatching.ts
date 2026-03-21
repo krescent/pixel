@@ -5,11 +5,16 @@ const WEIGHT_R = 0.3;
 const WEIGHT_G = 0.59;
 const WEIGHT_B = 0.11;
 
-export function findClosestPerlerColor(r: number, g: number, b: number): PerlerColor {
-  let closestColor = PERLER_COLORS[0];
+export function findClosestPerlerColor(
+  r: number, 
+  g: number, 
+  b: number,
+  colors: PerlerColor[] = PERLER_COLORS
+): PerlerColor {
+  let closestColor = colors[0];
   let minDistance = Infinity;
 
-  for (const color of PERLER_COLORS) {
+  for (const color of colors) {
     const distance = Math.sqrt(
       WEIGHT_R * Math.pow(color.rgb[0] - r, 2) +
       WEIGHT_G * Math.pow(color.rgb[1] - g, 2) +

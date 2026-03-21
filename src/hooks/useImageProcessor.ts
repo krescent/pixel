@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { findClosestPerlerColor } from "../utils/colorMatching";
 import type { PerlerColor } from "../utils/perlerColors";
-import { PERLER_COLORS } from "../utils/perlerColors";
+import { COLOR_BRANDS, PERLER_COLORS } from "../utils/perlerColors";
 
 const WHITE_COLOR = PERLER_COLORS.find((c: PerlerColor) => c.code === "H1")!;
 
@@ -14,8 +14,13 @@ export interface ProcessedPixel {
 export function useImageProcessor() {
   const processImage = useCallback((
     imageData: ImageData,
-    targetShortEdge: number
+    targetShortEdge: number,
+    brandName?: string
   ): { pixels: ProcessedPixel[][]; width: number; height: number } => {
+    const colors = brandName 
+      ? COLOR_BRANDS.find(b => b.name === brandName)?.colors ?? PERLER_COLORS
+      : PERLER_COLORS;
+    
     const { data, width: srcWidth, height: srcHeight } = imageData;
     
     const aspectRatio = srcWidth / srcHeight;
@@ -33,7 +38,7 @@ export function useImageProcessor() {
       const key = (r << 16) | (g << 8) | b;
       let cached = colorCache.get(key);
       if (!cached) {
-        cached = findClosestPerlerColor(r, g, b);
+        cached = findClosestPerlerColor(r, g, b, colors);
         colorCache.set(key, cached);
       }
       return cached;
