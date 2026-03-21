@@ -74,6 +74,7 @@ pnpm typecheck   # TypeScript 类型检查
 ### 颜色定义
 - 位置: `src/utils/perlerColors.ts`
 - 使用 RGB 数组定义每个颜色
+- 支持多品牌色板 (MARD 221色等)
 - 颜色名称使用标准 Perler 命名
 
 ### 颜色匹配算法
@@ -85,25 +86,26 @@ pnpm typecheck   # TypeScript 类型检查
 
 1. 用户上传图片
 2. 使用 Canvas 读取图像数据
-3. 按比例缩放到目标尺寸 (短边由滑轨控制)
-4. 对每个像素进行颜色量化
-5. 渲染拼豆网格显示
+3. 拖动蓝色取景框调整裁剪区域
+4. 按比例缩放到目标尺寸 (短边由滑轨控制)
+5. 对每个像素进行颜色量化
+6. 渲染拼豆网格显示
 
 ## 文件结构
 ```
 src/
-├── App.tsx              # 主应用组件
+├── App.tsx              # 主应用组件 (布局、状态管理)
 ├── components/
-│   ├── ImageUploader.tsx    # 图片上传组件
+│   ├── ImageUploader.tsx    # 图片上传 + 取景框拖动
 │   ├── PerlerGrid.tsx       # 拼豆网格显示
-│   └── Controls.tsx         # 控制面板 (滑轨、尺寸选择)
+│   ├── Controls.tsx          # 控制面板 (滑轨、尺寸、颜色品牌选择)
+│   └── DownloadButton.tsx    # 下载功能
 ├── utils/
-│   ├── perlerColors.ts     # Perler 90色色板
-│   └── colorMatching.ts    # 颜色匹配算法
+│   └── perlerColors.ts      # Perler 颜色数据库
 ├── hooks/
-│   └── useImageProcessor.ts # 图片处理 Hook
-├── index.css             # 全局样式 + Tailwind
-└── main.tsx             # 应用入口
+│   └── useImageProcessor.ts  # 图片处理 Hook
+├── index.css               # 全局样式 + Tailwind
+└── main.tsx               # 应用入口
 ```
 
 ## 提交规范

@@ -1,73 +1,73 @@
-# React + TypeScript + Vite
+# 🎨 拼豆图样生成器
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+一个将图片转换为拼豆 (Perler Beads) 图样的在线工具。
 
-Currently, two official plugins are available:
+![React](https://img.shields.io/badge/React-19-blue)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.0-38bdf8)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 功能特点
 
-## React Compiler
+- 📤 **图片上传**: 支持拖拽或点击上传图片
+- 🎯 **可调节取景框**: 拖动蓝色取景框选择图片区域
+- 🎚️ **像素控制**: 滑轨控制输出像素数量 (20-100)
+- 🎨 **多色板支持**: 支持 MARD 221色等多种色板
+- 🖼️ **透明/填充**: 可选择透明区域或填充白色
+- 📊 **图样统计**: 显示拼豆总数、使用颜色清单
+- 📥 **PNG下载**: 一键下载拼豆图样
+- 📱 **响应式设计**: 适配桌面端和移动端
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 快速开始
 
-## Expanding the ESLint configuration
+```bash
+# 安装依赖
+pnpm install
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+# 启动开发服务器
+pnpm dev
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+# 构建生产版本
+pnpm build
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# 预览生产版本
+pnpm preview
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 技术栈
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- **前端框架**: React 19
+- **类型系统**: TypeScript
+- **构建工具**: Vite
+- **样式方案**: Tailwind CSS 4
+- **包管理器**: pnpm
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 使用说明
+
+1. 在左侧上传图片
+2. 拖动蓝色取景框调整区域
+3. 调整滑轨控制像素数
+4. 选择拼豆尺寸
+5. 选择颜色品牌
+6. 选择透明/填充模式
+7. 点击下载保存图样
+
+## 项目结构
+
 ```
+src/
+├── App.tsx              # 主应用组件
+├── components/
+│   ├── ImageUploader.tsx    # 图片上传 + 取景框
+│   ├── PerlerGrid.tsx       # 拼豆网格显示
+│   ├── Controls.tsx          # 控制面板
+│   └── DownloadButton.tsx    # 下载按钮
+├── utils/
+│   └── perlerColors.ts      # Perler 颜色库
+├── hooks/
+│   └── useImageProcessor.ts  # 图片处理
+└── main.tsx               # 入口文件
+```
+
+## 许可证
+
+MIT
